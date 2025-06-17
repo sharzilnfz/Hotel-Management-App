@@ -1,0 +1,112 @@
+/* ================================
+   CUSTOM ROOM CARD HOVER EFFECTS
+   ================================ */
+
+/* Create overlay that slides up on hover */
+.rooms-carousel-item {
+	position: relative;
+	overflow: hidden;
+}
+
+/* Add a custom overlay element */
+.rooms-carousel-item::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 100%;
+	background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.7) 50%, rgba(0, 0, 0, 0.4) 100%);
+	transform: translateY(70%);
+	transition: all 0.4s ease-in-out;
+	opacity: 0;
+	z-index: 8;
+}
+
+/* Slide up the overlay on hover */
+.rooms-carousel-item:hover::after {
+	transform: translateY(0);
+	opacity: 1;
+}
+
+/* Ensure text content is above the overlay */
+.rooms-carousel-item_container {
+	position: relative;
+	z-index: 10;
+	transition: all 0.3s ease-in-out;
+}
+
+/* Enhance text visibility on hover */
+.rooms-carousel-item:hover .rooms-carousel-item_container {
+	text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+/* Make text brighter on hover */
+.rooms-carousel-item:hover .rooms-carousel-item_container h3 a,
+.rooms-carousel-item:hover .rooms-carousel-item_container p,
+.rooms-carousel-item:hover .rooms-carousel-item_container .room-card-details li {
+	color: #ffffff !important;
+}
+
+/* Enhance the background gradient overlay */
+.rooms-carousel-item .bg-parallax-wrap-gradien::before {
+	background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.2) 60%, transparent 100%);
+	transition: all 0.4s ease-in-out;
+}
+
+/* Strengthen the gradient on hover */
+.rooms-carousel-item:hover .bg-parallax-wrap-gradien::before {
+	background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0.2) 100%);
+}
+
+/* Like button positioning - bottom-left corner */
+.rooms-carousel-item .like-btn {
+	position: absolute !important;
+	bottom: 30px !important;
+	left: 30px !important;
+	top: auto !important;
+	right: auto !important;
+	transform: none !important;
+	z-index: 15 !important;
+	background: rgba(255, 255, 255, 0.95) !important;
+	backdrop-filter: blur(5px);
+	border-radius: 50% !important;
+	width: 45px !important;
+	height: 45px !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+	transition: all 0.3s ease-in-out !important;
+	border: 2px solid rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Like button icon styling */
+.rooms-carousel-item .like-btn i {
+	color: #333 !important;
+	font-size: 16px !important;
+	margin-right: 0 !important;
+}
+
+/* Like button text - hide it to save space */
+.rooms-carousel-item .like-btn span {
+	display: none !important;
+}
+
+/* Like button hover effect */
+.rooms-carousel-item:hover .like-btn {
+	background: rgba(220, 53, 69, 0.9) !important;
+	transform: scale(1.1) !important;
+	border-color: rgba(220, 53, 69, 0.8) !important;
+	bottom: 25px !important;
+	left: 25px !important;
+}
+
+.rooms-carousel-item:hover .like-btn i {
+	color: #ffffff !important;
+}
+
+/* Smooth transition for all hover effects */
+.rooms-carousel-item * {
+	transition: all 0.3s ease-in-out;
+} 
