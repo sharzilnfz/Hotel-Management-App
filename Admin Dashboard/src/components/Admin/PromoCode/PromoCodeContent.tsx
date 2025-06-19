@@ -1,24 +1,14 @@
-import { useState, useEffect } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Edit, Trash2, Plus, TagIcon, Clock, Users, ShoppingBag, DollarSign, UserPlus, Loader2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -26,43 +16,64 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
-} from "@/components/ui/form";
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox } from "@/components/ui/checkbox";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { format, parseISO } from "date-fns";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import axios from "axios";
-
-// API base URL
-const API_BASE_URL = "http://localhost:4000/api";
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useToast } from '@/hooks/use-toast';
+import promoCodeService, {
+  type CreatePromoCodeData,
+  type PromoCode,
+} from '@/services/promoCodeService';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { format } from 'date-fns';
+import {
+  DollarSign,
+  Edit,
+  Loader2,
+  Plus,
+  Search,
+  ShoppingBag,
+  Trash2,
+  UserPlus,
+  Users,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 const promoCodeSchema = z.object({
-  code: z.string().min(3, "Code must be at least 3 characters"),
-  discount: z.string().min(1, "Discount is required"),
-  type: z.enum(["Percentage", "Fixed"]),
+  code: z.string().min(3, 'Code must be at least 3 characters'),
+  discount: z.string().min(1, 'Discount is required'),
+  type: z.enum(['Percentage', 'Fixed']),
   validFromDate: z.date({
-    required_error: "Start date is required",
+    required_error: 'Start date is required',
   }),
   validToDate: z.date({
-    required_error: "End date is required",
+    required_error: 'End date is required',
   }),
-  validFromTime: z.string().min(1, "Start time is required"),
-  validToTime: z.string().min(1, "End time is required"),
-  status: z.enum(["Active", "Expired", "Scheduled"]),
+  validFromTime: z.string().min(1, 'Start time is required'),
+  validToTime: z.string().min(1, 'End time is required'),
+  status: z.enum(['Active', 'Expired', 'Scheduled']),
   capacity: z.string().min(0).optional(),
-  applicableServices: z.array(z.string()).min(1, "Select at least one applicable service"),
+  applicableServices: z
+    .array(z.string())
+    .min(1, 'Select at least one applicable service'),
   minPurchase: z.string().optional(),
   maxDiscountCap: z.string().optional(),
   newCustomersOnly: z.boolean().default(false),
@@ -71,101 +82,80 @@ const promoCodeSchema = z.object({
 
 type PromoCodeFormValues = z.infer<typeof promoCodeSchema>;
 
-type PromoCode = {
-  id: number | string;
-  _id?: string;
-  code: string;
-  discount: string;
-  type: "Percentage" | "Fixed";
-  validFrom: string;
-  validTo: string;
-  validFromTime: string;
-  validToTime: string;
-  status: "Active" | "Expired" | "Scheduled";
-  usageCount: number;
-  capacity?: string;
-  applicableServices?: string[];
-  minPurchase?: string;
-  maxDiscountCap?: string;
-  newCustomersOnly: boolean;
-  maxUsesPerCustomer?: string;
-};
-
 const serviceOptions = [
-  { label: "All Rooms", value: "all_rooms" },
-  { label: "Standard Room", value: "standard_room" },
-  { label: "Deluxe Room", value: "deluxe_room" },
-  { label: "Suite", value: "suite" },
-  { label: "All Spa Services", value: "all_spa" },
-  { label: "Massage", value: "massage" },
-  { label: "Facial", value: "facial" },
-  { label: "Body Treatment", value: "body_treatment" },
-  { label: "All Events", value: "all_events" },
-  { label: "Corporate Events", value: "corporate_events" },
-  { label: "Weddings", value: "weddings" },
-  { label: "All Restaurant Items", value: "all_restaurant" },
-  { label: "Main Course", value: "main_course" },
-  { label: "Desserts", value: "desserts" },
-  { label: "Beverages", value: "beverages" },
+  { label: 'All Rooms', value: 'all_rooms' },
+  { label: 'Standard Room', value: 'standard_room' },
+  { label: 'Deluxe Room', value: 'deluxe_room' },
+  { label: 'Suite', value: 'suite' },
+  { label: 'All Spa Services', value: 'all_spa' },
+  { label: 'Massage', value: 'massage' },
+  { label: 'Facial', value: 'facial' },
+  { label: 'Body Treatment', value: 'body_treatment' },
+  { label: 'All Events', value: 'all_events' },
+  { label: 'Corporate Events', value: 'corporate_events' },
+  { label: 'Weddings', value: 'weddings' },
+  { label: 'All Restaurant Items', value: 'all_restaurant' },
+  { label: 'Main Course', value: 'main_course' },
+  { label: 'Desserts', value: 'desserts' },
+  { label: 'Beverages', value: 'beverages' },
 ];
 
 const PromoCodeContent = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedPromoCode, setSelectedPromoCode] = useState<PromoCode | null>(null);
+  const [selectedPromoCode, setSelectedPromoCode] = useState<PromoCode | null>(
+    null
+  );
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
-
   // Fetch promo codes from the API
   useEffect(() => {
     const fetchPromoCodes = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`${API_BASE_URL}/promo-codes`);
+        const fetchedPromoCodes = await promoCodeService.getAllPromoCodes();
 
-        if (response.data.status === 'success') {
-          const formattedPromoCodes = response.data.data.promoCodes.map((code: any) => ({
-            ...code,
-            id: code._id,
-            validFrom: format(new Date(code.validFrom), 'yyyy-MM-dd'),
-            validTo: format(new Date(code.validTo), 'yyyy-MM-dd')
-          }));
+        const formattedPromoCodes = fetchedPromoCodes.map((code) => ({
+          ...code,
+          id: code._id || code.id || '',
+          validFrom: format(new Date(code.validFrom), 'yyyy-MM-dd'),
+          validTo: format(new Date(code.validTo), 'yyyy-MM-dd'),
+        }));
 
-          setPromoCodes(formattedPromoCodes);
-        } else {
-          throw new Error('Failed to fetch promo codes');
-        }
+        setPromoCodes(formattedPromoCodes);
       } catch (error) {
         console.error('Error fetching promo codes:', error);
         toast({
-          title: "Error",
-          description: "Failed to load promo codes. Please try again.",
-          variant: "destructive"
+          title: 'Error',
+          description: 'Failed to load promo codes. Please try again.',
+          variant: 'destructive',
         });
 
         // Set sample data for display purposes if API fails
         setPromoCodes([
           {
-            id: 1,
-            code: "SUMMER25",
-            discount: "25%",
-            type: "Percentage",
-            validFrom: "2025-06-01",
-            validTo: "2025-08-31",
-            validFromTime: "00:00",
-            validToTime: "23:59",
-            status: "Active",
+            id: '1',
+            code: 'SUMMER25',
+            discount: '25%',
+            discountType: 'percentage',
+            discountValue: 25,
+            type: 'Percentage',
+            validFrom: '2025-06-01',
+            validTo: '2025-08-31',
+            validFromTime: '00:00',
+            validToTime: '23:59',
+            status: 'Active',
             usageCount: 156,
-            capacity: "1000",
-            applicableServices: ["standard_room", "deluxe_room"],
-            minPurchase: "100",
-            maxDiscountCap: "50",
+            capacity: '1000',
+            applicableServices: ['standard_room', 'deluxe_room'],
+            minPurchase: '100',
+            maxDiscountCap: '50',
             newCustomersOnly: true,
-            maxUsesPerCustomer: "1",
+            maxUsesPerCustomer: '1',
           },
           // ... other sample promo codes
         ]);
@@ -187,39 +177,39 @@ const PromoCodeContent = () => {
   const form = useForm<PromoCodeFormValues>({
     resolver: zodResolver(promoCodeSchema),
     defaultValues: {
-      code: "",
-      discount: "",
-      type: "Percentage",
+      code: '',
+      discount: '',
+      type: 'Percentage',
       validFromDate: new Date(),
       validToDate: new Date(),
-      validFromTime: "00:00",
-      validToTime: "23:59",
-      status: "Active",
-      capacity: "",
+      validFromTime: '00:00',
+      validToTime: '23:59',
+      status: 'Active',
+      capacity: '',
       applicableServices: [],
-      minPurchase: "",
-      maxDiscountCap: "",
+      minPurchase: '',
+      maxDiscountCap: '',
       newCustomersOnly: false,
-      maxUsesPerCustomer: "",
-    }
+      maxUsesPerCustomer: '',
+    },
   });
 
   const handleAddClick = () => {
     form.reset({
-      code: "",
-      discount: "",
-      type: "Percentage",
+      code: '',
+      discount: '',
+      type: 'Percentage',
       validFromDate: new Date(),
       validToDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
-      validFromTime: "00:00",
-      validToTime: "23:59",
-      status: "Active",
-      capacity: "",
+      validFromTime: '00:00',
+      validToTime: '23:59',
+      status: 'Active',
+      capacity: '',
       applicableServices: [],
-      minPurchase: "",
-      maxDiscountCap: "",
+      minPurchase: '',
+      maxDiscountCap: '',
       newCustomersOnly: false,
-      maxUsesPerCustomer: "",
+      maxUsesPerCustomer: '',
     });
     setIsAddDialogOpen(true);
   };
@@ -229,13 +219,15 @@ const PromoCodeContent = () => {
 
     // If API dates are already ISO strings, parse them
     // Otherwise, keep them as is (they might already be date objects)
-    const fromDate = typeof promo.validFrom === 'string'
-      ? new Date(promo.validFrom)
-      : promo.validFrom;
+    const fromDate =
+      typeof promo.validFrom === 'string'
+        ? new Date(promo.validFrom)
+        : promo.validFrom;
 
-    const toDate = typeof promo.validTo === 'string'
-      ? new Date(promo.validTo)
-      : promo.validTo;
+    const toDate =
+      typeof promo.validTo === 'string'
+        ? new Date(promo.validTo)
+        : promo.validTo;
 
     form.reset({
       code: promo.code,
@@ -243,15 +235,15 @@ const PromoCodeContent = () => {
       type: promo.type,
       validFromDate: fromDate,
       validToDate: toDate,
-      validFromTime: promo.validFromTime || "00:00",
-      validToTime: promo.validToTime || "23:59",
+      validFromTime: promo.validFromTime || '00:00',
+      validToTime: promo.validToTime || '23:59',
       status: promo.status,
-      capacity: promo.capacity || "",
+      capacity: promo.capacity || '',
       applicableServices: promo.applicableServices || [],
-      minPurchase: promo.minPurchase || "",
-      maxDiscountCap: promo.maxDiscountCap || "",
+      minPurchase: promo.minPurchase || '',
+      maxDiscountCap: promo.maxDiscountCap || '',
       newCustomersOnly: promo.newCustomersOnly || false,
-      maxUsesPerCustomer: promo.maxUsesPerCustomer || "",
+      maxUsesPerCustomer: promo.maxUsesPerCustomer || '',
     });
     setIsEditDialogOpen(true);
   };
@@ -260,14 +252,16 @@ const PromoCodeContent = () => {
     setSelectedPromoCode(promo);
     setIsDeleteDialogOpen(true);
   };
-
   const handleAddSubmit = async (values: PromoCodeFormValues) => {
     const formattedFromDate = format(values.validFromDate, 'yyyy-MM-dd');
     const formattedToDate = format(values.validToDate, 'yyyy-MM-dd');
 
-    const promoCodeData = {
+    const promoCodeData: CreatePromoCodeData = {
       code: values.code,
-      discount: values.type === "Percentage" ? `${values.discount}%` : `$${values.discount}`,
+      discount:
+        values.type === 'Percentage'
+          ? `${values.discount}%`
+          : `$${values.discount}`,
       type: values.type,
       validFrom: formattedFromDate,
       validTo: formattedToDate,
@@ -284,31 +278,32 @@ const PromoCodeContent = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post(`${API_BASE_URL}/promo-codes`, promoCodeData);
+      const newPromoCode = await promoCodeService.createPromoCode(
+        promoCodeData
+      );
 
-      if (response.data.status === 'success') {
-        const newPromoCode = {
-          ...response.data.data.promoCode,
-          id: response.data.data.promoCode._id,
-          validFrom: formattedFromDate,
-          validTo: formattedToDate
-        };
+      const formattedPromoCode = {
+        ...newPromoCode,
+        id: newPromoCode._id || newPromoCode.id || '',
+        validFrom: formattedFromDate,
+        validTo: formattedToDate,
+      };
 
-        setPromoCodes([...promoCodes, newPromoCode]);
-        setIsAddDialogOpen(false);
-        toast({
-          title: "Promo Code Added",
-          description: `${newPromoCode.code} has been created successfully.`
-        });
-      } else {
-        throw new Error('Failed to create promo code');
-      }
-    } catch (error: any) {
+      setPromoCodes([...promoCodes, formattedPromoCode]);
+      setIsAddDialogOpen(false);
+      toast({
+        title: 'Promo Code Added',
+        description: `${newPromoCode.code} has been created successfully.`,
+      });
+    } catch (error) {
       console.error('Error creating promo code:', error);
       toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to create promo code. Please try again.",
-        variant: "destructive"
+        title: 'Error',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Failed to create promo code. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -321,9 +316,12 @@ const PromoCodeContent = () => {
     const formattedFromDate = format(values.validFromDate, 'yyyy-MM-dd');
     const formattedToDate = format(values.validToDate, 'yyyy-MM-dd');
 
-    const promoCodeData = {
+    const promoCodeData: Partial<CreatePromoCodeData> = {
       code: values.code,
-      discount: values.type === "Percentage" ? `${values.discount}%` : `$${values.discount}`,
+      discount:
+        values.type === 'Percentage'
+          ? `${values.discount}%`
+          : `$${values.discount}`,
       type: values.type,
       validFrom: formattedFromDate,
       validTo: formattedToDate,
@@ -340,35 +338,37 @@ const PromoCodeContent = () => {
 
     try {
       setLoading(true);
-      const response = await axios.patch(`${API_BASE_URL}/promo-codes/${selectedPromoCode._id || selectedPromoCode.id}`, promoCodeData);
+      const updatedPromoCode = await promoCodeService.updatePromoCode(
+        selectedPromoCode._id || selectedPromoCode.id || '',
+        promoCodeData
+      );
 
-      if (response.data.status === 'success') {
-        const updatedPromoCode = {
-          ...response.data.data.promoCode,
-          id: response.data.data.promoCode._id,
-          validFrom: formattedFromDate,
-          validTo: formattedToDate
-        };
+      const formattedUpdatedPromoCode = {
+        ...updatedPromoCode,
+        id: updatedPromoCode._id || updatedPromoCode.id || '',
+        validFrom: formattedFromDate,
+        validTo: formattedToDate,
+      };
 
-        const updatedPromoCodes = promoCodes.map(promo =>
-          promo.id === selectedPromoCode.id ? updatedPromoCode : promo
-        );
+      const updatedPromoCodes = promoCodes.map((promo) =>
+        promo.id === selectedPromoCode.id ? formattedUpdatedPromoCode : promo
+      );
 
-        setPromoCodes(updatedPromoCodes);
-        setIsEditDialogOpen(false);
-        toast({
-          title: "Promo Code Updated",
-          description: `${values.code} has been updated successfully.`
-        });
-      } else {
-        throw new Error('Failed to update promo code');
-      }
-    } catch (error: any) {
+      setPromoCodes(updatedPromoCodes);
+      setIsEditDialogOpen(false);
+      toast({
+        title: 'Promo Code Updated',
+        description: `${values.code} has been updated successfully.`,
+      });
+    } catch (error) {
       console.error('Error updating promo code:', error);
       toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to update promo code. Please try again.",
-        variant: "destructive"
+        title: 'Error',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Failed to update promo code. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -380,25 +380,30 @@ const PromoCodeContent = () => {
 
     try {
       setLoading(true);
-      await axios.delete(`${API_BASE_URL}/promo-codes/${selectedPromoCode._id || selectedPromoCode.id}`);
+      await promoCodeService.deletePromoCode(
+        selectedPromoCode._id || selectedPromoCode.id || ''
+      );
 
       const updatedPromoCodes = promoCodes.filter(
-        promo => promo.id !== selectedPromoCode.id
+        (promo) => promo.id !== selectedPromoCode.id
       );
 
       setPromoCodes(updatedPromoCodes);
       setIsDeleteDialogOpen(false);
       toast({
-        title: "Promo Code Deleted",
+        title: 'Promo Code Deleted',
         description: `${selectedPromoCode.code} has been deleted.`,
-        variant: "destructive"
+        variant: 'destructive',
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting promo code:', error);
       toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to delete promo code. Please try again.",
-        variant: "destructive"
+        title: 'Error',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Failed to delete promo code. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -406,27 +411,31 @@ const PromoCodeContent = () => {
   };
 
   const formatApplicableServices = (services?: string[]) => {
-    if (!services || services.length === 0) return "None";
+    if (!services || services.length === 0) return 'None';
 
-    if (services.includes("all_rooms") &&
-      services.includes("all_spa") &&
-      services.includes("all_events") &&
-      services.includes("all_restaurant")) {
-      return "All Services";
+    if (
+      services.includes('all_rooms') &&
+      services.includes('all_spa') &&
+      services.includes('all_events') &&
+      services.includes('all_restaurant')
+    ) {
+      return 'All Services';
     }
 
-    const serviceNames = services.map(service => {
-      const option = serviceOptions.find(opt => opt.value === service);
+    const serviceNames = services.map((service) => {
+      const option = serviceOptions.find((opt) => opt.value === service);
       return option ? option.label : service;
     });
 
-    return serviceNames.join(", ");
+    return serviceNames.join(', ');
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Promo Code Management</h1>
+        <h1 className="text-2xl font-bold text-gray-800">
+          Promo Code Management
+        </h1>
         <Button className="flex items-center gap-2" onClick={handleAddClick}>
           <Plus size={16} />
           <span>Add New Promo Code</span>
@@ -436,7 +445,10 @@ const PromoCodeContent = () => {
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex items-center justify-between mb-6">
           <div className="relative w-80">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={18}
+            />
             <Input
               type="text"
               placeholder="Search promo codes..."
@@ -474,7 +486,9 @@ const PromoCodeContent = () => {
                 {filteredPromoCodes.length > 0 ? (
                   filteredPromoCodes.map((promo) => (
                     <TableRow key={promo.id}>
-                      <TableCell className="font-medium">{promo.code}</TableCell>
+                      <TableCell className="font-medium">
+                        {promo.code}
+                      </TableCell>
                       <TableCell>{promo.discount}</TableCell>
                       <TableCell className="text-sm">
                         {promo.validFrom} to {promo.validTo}
@@ -482,17 +496,22 @@ const PromoCodeContent = () => {
                           {promo.validFromTime} - {promo.validToTime}
                         </div>
                       </TableCell>
-                      <TableCell className="max-w-[200px] truncate" title={formatApplicableServices(promo.applicableServices)}>
+                      <TableCell
+                        className="max-w-[200px] truncate"
+                        title={formatApplicableServices(
+                          promo.applicableServices
+                        )}
+                      >
                         {formatApplicableServices(promo.applicableServices)}
                       </TableCell>
                       <TableCell>
                         <Badge
                           className={
-                            promo.status === "Active"
-                              ? "bg-green-100 text-green-800 hover:bg-green-200"
-                              : promo.status === "Scheduled"
-                                ? "bg-blue-100 text-blue-800 hover:bg-blue-200"
-                                : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                            promo.status === 'Active'
+                              ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                              : promo.status === 'Scheduled'
+                              ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                           }
                         >
                           {promo.status}
@@ -501,13 +520,19 @@ const PromoCodeContent = () => {
                       <TableCell>{promo.usageCount}</TableCell>
                       <TableCell>
                         {promo.newCustomersOnly && (
-                          <Badge className="bg-purple-100 text-purple-800 mr-1">New Customers</Badge>
+                          <Badge className="bg-purple-100 text-purple-800 mr-1">
+                            New Customers
+                          </Badge>
                         )}
                         {promo.minPurchase && (
-                          <Badge className="bg-yellow-100 text-yellow-800 mr-1">Min: ${promo.minPurchase}</Badge>
+                          <Badge className="bg-yellow-100 text-yellow-800 mr-1">
+                            Min: ${promo.minPurchase}
+                          </Badge>
                         )}
                         {promo.maxUsesPerCustomer && (
-                          <Badge className="bg-blue-100 text-blue-800">Max: {promo.maxUsesPerCustomer}/user</Badge>
+                          <Badge className="bg-blue-100 text-blue-800">
+                            Max: {promo.maxUsesPerCustomer}/user
+                          </Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -533,7 +558,10 @@ const PromoCodeContent = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-10 text-gray-500">
+                    <TableCell
+                      colSpan={8}
+                      className="text-center py-10 text-gray-500"
+                    >
                       No promo codes found
                     </TableCell>
                   </TableRow>
@@ -555,7 +583,10 @@ const PromoCodeContent = () => {
 
           <ScrollArea className="max-h-[calc(90vh-180px)] pr-4">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleAddSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(handleAddSubmit)}
+                className="space-y-4"
+              >
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -618,8 +649,12 @@ const PromoCodeContent = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Percentage">Percentage (%)</SelectItem>
-                            <SelectItem value="Fixed">Fixed Amount ($)</SelectItem>
+                            <SelectItem value="Percentage">
+                              Percentage (%)
+                            </SelectItem>
+                            <SelectItem value="Fixed">
+                              Fixed Amount ($)
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -654,9 +689,15 @@ const PromoCodeContent = () => {
                             <FormControl>
                               <Input
                                 type="date"
-                                value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
-                                onChange={e => {
-                                  const date = e.target.value ? new Date(e.target.value) : null;
+                                value={
+                                  field.value
+                                    ? format(field.value, 'yyyy-MM-dd')
+                                    : ''
+                                }
+                                onChange={(e) => {
+                                  const date = e.target.value
+                                    ? new Date(e.target.value)
+                                    : null;
                                   if (date) field.onChange(date);
                                 }}
                               />
@@ -690,9 +731,15 @@ const PromoCodeContent = () => {
                             <FormControl>
                               <Input
                                 type="date"
-                                value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
-                                onChange={e => {
-                                  const date = e.target.value ? new Date(e.target.value) : null;
+                                value={
+                                  field.value
+                                    ? format(field.value, 'yyyy-MM-dd')
+                                    : ''
+                                }
+                                onChange={(e) => {
+                                  const date = e.target.value
+                                    ? new Date(e.target.value)
+                                    : null;
                                   if (date) field.onChange(date);
                                 }}
                               />
@@ -727,7 +774,11 @@ const PromoCodeContent = () => {
                         <div className="flex items-center">
                           <Users size={16} className="mr-2 text-gray-500" />
                           <FormControl>
-                            <Input type="number" placeholder="Unlimited" {...field} />
+                            <Input
+                              type="number"
+                              placeholder="Unlimited"
+                              {...field}
+                            />
                           </FormControl>
                         </div>
                         <FormDescription>
@@ -747,7 +798,11 @@ const PromoCodeContent = () => {
                         <div className="flex items-center">
                           <UserPlus size={16} className="mr-2 text-gray-500" />
                           <FormControl>
-                            <Input type="number" placeholder="Unlimited" {...field} />
+                            <Input
+                              type="number"
+                              placeholder="Unlimited"
+                              {...field}
+                            />
                           </FormControl>
                         </div>
                         <FormDescription>
@@ -767,9 +822,16 @@ const PromoCodeContent = () => {
                       <FormItem>
                         <FormLabel>Minimum Purchase Requirement ($)</FormLabel>
                         <div className="flex items-center">
-                          <ShoppingBag size={16} className="mr-2 text-gray-500" />
+                          <ShoppingBag
+                            size={16}
+                            className="mr-2 text-gray-500"
+                          />
                           <FormControl>
-                            <Input type="number" placeholder="No minimum" {...field} />
+                            <Input
+                              type="number"
+                              placeholder="No minimum"
+                              {...field}
+                            />
                           </FormControl>
                         </div>
                         <FormDescription>
@@ -787,13 +849,21 @@ const PromoCodeContent = () => {
                       <FormItem>
                         <FormLabel>Maximum Discount Cap ($)</FormLabel>
                         <div className="flex items-center">
-                          <DollarSign size={16} className="mr-2 text-gray-500" />
+                          <DollarSign
+                            size={16}
+                            className="mr-2 text-gray-500"
+                          />
                           <FormControl>
-                            <Input type="number" placeholder="No maximum" {...field} />
+                            <Input
+                              type="number"
+                              placeholder="No maximum"
+                              {...field}
+                            />
                           </FormControl>
                         </div>
                         <FormDescription>
-                          Maximum amount the discount can be (for percentage discounts)
+                          Maximum amount the discount can be (for percentage
+                          discounts)
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -815,7 +885,8 @@ const PromoCodeContent = () => {
                       <div className="space-y-1 leading-none">
                         <FormLabel>New Customers Only</FormLabel>
                         <FormDescription>
-                          This promo code can only be used by customers who have never made a purchase before
+                          This promo code can only be used by customers who have
+                          never made a purchase before
                         </FormDescription>
                       </div>
                     </FormItem>
@@ -842,12 +913,15 @@ const PromoCodeContent = () => {
                                 checked={field.value?.includes(option.value)}
                                 onCheckedChange={(checked) => {
                                   return checked
-                                    ? field.onChange([...field.value, option.value])
+                                    ? field.onChange([
+                                        ...field.value,
+                                        option.value,
+                                      ])
                                     : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== option.value
-                                      )
-                                    );
+                                        field.value?.filter(
+                                          (value) => value !== option.value
+                                        )
+                                      );
                                 }}
                               />
                             </FormControl>
@@ -863,11 +937,18 @@ const PromoCodeContent = () => {
                 />
 
                 <DialogFooter>
-                  <Button variant="outline" type="button" onClick={() => setIsAddDialogOpen(false)} disabled={loading}>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => setIsAddDialogOpen(false)}
+                    disabled={loading}
+                  >
                     Cancel
                   </Button>
                   <Button type="submit" disabled={loading}>
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {loading && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
                     Save Promo Code
                   </Button>
                 </DialogFooter>
@@ -888,7 +969,10 @@ const PromoCodeContent = () => {
 
           <ScrollArea className="max-h-[calc(90vh-180px)] pr-4">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleEditSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(handleEditSubmit)}
+                className="space-y-4"
+              >
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -950,8 +1034,12 @@ const PromoCodeContent = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Percentage">Percentage (%)</SelectItem>
-                            <SelectItem value="Fixed">Fixed Amount ($)</SelectItem>
+                            <SelectItem value="Percentage">
+                              Percentage (%)
+                            </SelectItem>
+                            <SelectItem value="Fixed">
+                              Fixed Amount ($)
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -986,9 +1074,15 @@ const PromoCodeContent = () => {
                             <FormControl>
                               <Input
                                 type="date"
-                                value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
-                                onChange={e => {
-                                  const date = e.target.value ? new Date(e.target.value) : null;
+                                value={
+                                  field.value
+                                    ? format(field.value, 'yyyy-MM-dd')
+                                    : ''
+                                }
+                                onChange={(e) => {
+                                  const date = e.target.value
+                                    ? new Date(e.target.value)
+                                    : null;
                                   if (date) field.onChange(date);
                                 }}
                               />
@@ -1022,9 +1116,15 @@ const PromoCodeContent = () => {
                             <FormControl>
                               <Input
                                 type="date"
-                                value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
-                                onChange={e => {
-                                  const date = e.target.value ? new Date(e.target.value) : null;
+                                value={
+                                  field.value
+                                    ? format(field.value, 'yyyy-MM-dd')
+                                    : ''
+                                }
+                                onChange={(e) => {
+                                  const date = e.target.value
+                                    ? new Date(e.target.value)
+                                    : null;
                                   if (date) field.onChange(date);
                                 }}
                               />
@@ -1059,7 +1159,11 @@ const PromoCodeContent = () => {
                         <div className="flex items-center">
                           <Users size={16} className="mr-2 text-gray-500" />
                           <FormControl>
-                            <Input type="number" placeholder="Unlimited" {...field} />
+                            <Input
+                              type="number"
+                              placeholder="Unlimited"
+                              {...field}
+                            />
                           </FormControl>
                         </div>
                         <FormDescription>
@@ -1079,7 +1183,11 @@ const PromoCodeContent = () => {
                         <div className="flex items-center">
                           <UserPlus size={16} className="mr-2 text-gray-500" />
                           <FormControl>
-                            <Input type="number" placeholder="Unlimited" {...field} />
+                            <Input
+                              type="number"
+                              placeholder="Unlimited"
+                              {...field}
+                            />
                           </FormControl>
                         </div>
                         <FormDescription>
@@ -1099,9 +1207,16 @@ const PromoCodeContent = () => {
                       <FormItem>
                         <FormLabel>Minimum Purchase Requirement ($)</FormLabel>
                         <div className="flex items-center">
-                          <ShoppingBag size={16} className="mr-2 text-gray-500" />
+                          <ShoppingBag
+                            size={16}
+                            className="mr-2 text-gray-500"
+                          />
                           <FormControl>
-                            <Input type="number" placeholder="No minimum" {...field} />
+                            <Input
+                              type="number"
+                              placeholder="No minimum"
+                              {...field}
+                            />
                           </FormControl>
                         </div>
                         <FormDescription>
@@ -1119,13 +1234,21 @@ const PromoCodeContent = () => {
                       <FormItem>
                         <FormLabel>Maximum Discount Cap ($)</FormLabel>
                         <div className="flex items-center">
-                          <DollarSign size={16} className="mr-2 text-gray-500" />
+                          <DollarSign
+                            size={16}
+                            className="mr-2 text-gray-500"
+                          />
                           <FormControl>
-                            <Input type="number" placeholder="No maximum" {...field} />
+                            <Input
+                              type="number"
+                              placeholder="No maximum"
+                              {...field}
+                            />
                           </FormControl>
                         </div>
                         <FormDescription>
-                          Maximum amount the discount can be (for percentage discounts)
+                          Maximum amount the discount can be (for percentage
+                          discounts)
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -1147,7 +1270,8 @@ const PromoCodeContent = () => {
                       <div className="space-y-1 leading-none">
                         <FormLabel>New Customers Only</FormLabel>
                         <FormDescription>
-                          This promo code can only be used by customers who have never made a purchase before
+                          This promo code can only be used by customers who have
+                          never made a purchase before
                         </FormDescription>
                       </div>
                     </FormItem>
@@ -1174,12 +1298,15 @@ const PromoCodeContent = () => {
                                 checked={field.value?.includes(option.value)}
                                 onCheckedChange={(checked) => {
                                   return checked
-                                    ? field.onChange([...field.value, option.value])
+                                    ? field.onChange([
+                                        ...field.value,
+                                        option.value,
+                                      ])
                                     : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== option.value
-                                      )
-                                    );
+                                        field.value?.filter(
+                                          (value) => value !== option.value
+                                        )
+                                      );
                                 }}
                               />
                             </FormControl>
@@ -1195,11 +1322,18 @@ const PromoCodeContent = () => {
                 />
 
                 <DialogFooter>
-                  <Button variant="outline" type="button" onClick={() => setIsEditDialogOpen(false)} disabled={loading}>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => setIsEditDialogOpen(false)}
+                    disabled={loading}
+                  >
                     Cancel
                   </Button>
                   <Button type="submit" disabled={loading}>
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {loading && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
                     Update Promo Code
                   </Button>
                 </DialogFooter>
@@ -1214,15 +1348,24 @@ const PromoCodeContent = () => {
           <DialogHeader>
             <DialogTitle>Delete Promo Code</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this promo code? This action cannot be undone.
+              Are you sure you want to delete this promo code? This action
+              cannot be undone.
             </DialogDescription>
           </DialogHeader>
 
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={loading}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={loading}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={loading}>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={loading}
+            >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Delete
             </Button>

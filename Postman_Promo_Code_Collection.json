@@ -1,0 +1,516 @@
+{
+  "info": {
+    "name": "Hotel Promo Code API",
+    "description": "Complete API collection for testing the hotel promo code system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:4000/api",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Admin Promo Code Management",
+      "item": [
+        {
+          "name": "Get All Promo Codes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/promo-codes",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Promo Codes by Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/promo-codes?status=Active",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Active"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Percentage Promo Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"SUMMER25\",\n  \"discount\": \"25%\",\n  \"type\": \"Percentage\",\n  \"validFrom\": \"2025-06-19\",\n  \"validTo\": \"2025-08-31\",\n  \"validFromTime\": \"00:00\",\n  \"validToTime\": \"23:59\",\n  \"status\": \"Active\",\n  \"capacity\": \"1000\",\n  \"applicableServices\": [\"all_rooms\", \"spa\"],\n  \"minPurchase\": \"100\",\n  \"maxDiscountCap\": \"50\",\n  \"newCustomersOnly\": false,\n  \"maxUsesPerCustomer\": \"3\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/promo-codes",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Fixed Amount Promo Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"FIXED50\",\n  \"discount\": \"$50\",\n  \"type\": \"Fixed\",\n  \"validFrom\": \"2025-06-19\",\n  \"validTo\": \"2025-12-31\",\n  \"validFromTime\": \"00:00\",\n  \"validToTime\": \"23:59\",\n  \"status\": \"Active\",\n  \"capacity\": \"500\",\n  \"applicableServices\": [\"deluxe_room\", \"suite\"],\n  \"minPurchase\": \"200\",\n  \"maxDiscountCap\": \"\",\n  \"newCustomersOnly\": true,\n  \"maxUsesPerCustomer\": \"1\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/promo-codes",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create New Customer Only Promo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"WELCOME15\",\n  \"discount\": \"15%\",\n  \"type\": \"Percentage\",\n  \"validFrom\": \"2025-06-19\",\n  \"validTo\": \"2025-12-31\",\n  \"validFromTime\": \"00:00\",\n  \"validToTime\": \"23:59\",\n  \"status\": \"Active\",\n  \"capacity\": \"2000\",\n  \"applicableServices\": [\"all_rooms\", \"all_spa\", \"all_restaurant\"],\n  \"minPurchase\": \"75\",\n  \"maxDiscountCap\": \"100\",\n  \"newCustomersOnly\": true,\n  \"maxUsesPerCustomer\": \"1\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/promo-codes",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Promo Code",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/promo-codes/{{promo_code_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes", "{{promo_code_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Promo Code",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"discount\": \"30%\",\n  \"status\": \"Active\",\n  \"maxDiscountCap\": \"75\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/promo-codes/{{promo_code_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes", "{{promo_code_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Promo Code",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/promo-codes/{{promo_code_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes", "{{promo_code_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Public Promo Code Validation",
+      "item": [
+        {
+          "name": "Validate Valid Promo Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"SUMMER25\",\n  \"serviceType\": \"deluxe_room\",\n  \"orderAmount\": 300,\n  \"customerId\": \"customer123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/promo-codes/validate",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes", "validate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Validate with Minimum Purchase Requirement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"SUMMER25\",\n  \"serviceType\": \"deluxe_room\",\n  \"orderAmount\": 50,\n  \"customerId\": \"customer123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/promo-codes/validate",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes", "validate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Non-Applicable Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"FIXED50\",\n  \"serviceType\": \"restaurant\",\n  \"orderAmount\": 300,\n  \"customerId\": \"customer123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/promo-codes/validate",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes", "validate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Invalid Promo Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"INVALID123\",\n  \"serviceType\": \"deluxe_room\",\n  \"orderAmount\": 300,\n  \"customerId\": \"customer123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/promo-codes/validate",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes", "validate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Case Insensitive",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"summer25\",\n  \"serviceType\": \"deluxe_room\",\n  \"orderAmount\": 300,\n  \"customerId\": \"customer123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/promo-codes/validate",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes", "validate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Fixed Amount Promo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"FIXED50\",\n  \"serviceType\": \"deluxe_room\",\n  \"orderAmount\": 300,\n  \"customerId\": \"customer456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/promo-codes/validate",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes", "validate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Apply Promo Code (Increment Usage)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"SUMMER25\",\n  \"customerId\": \"customer123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/promo-codes/apply",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes", "apply"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Edge Cases & Error Testing",
+      "item": [
+        {
+          "name": "Test Empty Promo Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"\",\n  \"serviceType\": \"deluxe_room\",\n  \"orderAmount\": 300\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/promo-codes/validate",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes", "validate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Test Expired Promo Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"EXPIRED2024\",\n  \"discount\": \"20%\",\n  \"type\": \"Percentage\",\n  \"validFrom\": \"2024-01-01\",\n  \"validTo\": \"2024-12-31\",\n  \"validFromTime\": \"00:00\",\n  \"validToTime\": \"23:59\",\n  \"status\": \"Expired\",\n  \"capacity\": \"100\",\n  \"applicableServices\": [\"all_rooms\"],\n  \"minPurchase\": \"50\",\n  \"maxDiscountCap\": \"100\",\n  \"newCustomersOnly\": false,\n  \"maxUsesPerCustomer\": \"1\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/promo-codes",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Test Duplicate Promo Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"SUMMER25\",\n  \"discount\": \"30%\",\n  \"type\": \"Percentage\",\n  \"validFrom\": \"2025-06-19\",\n  \"validTo\": \"2025-08-31\",\n  \"validFromTime\": \"00:00\",\n  \"validToTime\": \"23:59\",\n  \"status\": \"Active\",\n  \"capacity\": \"1000\",\n  \"applicableServices\": [\"all_rooms\"],\n  \"minPurchase\": \"100\",\n  \"maxDiscountCap\": \"50\",\n  \"newCustomersOnly\": false,\n  \"maxUsesPerCustomer\": \"3\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/promo-codes",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Test Invalid Promo Code ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/promo-codes/invalid_id_123",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes", "invalid_id_123"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Test Missing Required Fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"INCOMPLETE\",\n  \"discount\": \"20%\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/promo-codes",
+              "host": ["{{base_url}}"],
+              "path": ["promo-codes"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Booking Integration Examples",
+      "item": [
+        {
+          "name": "Event Booking with Promo Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerEmail\": \"john.doe@example.com\",\n  \"customerName\": \"John Doe\",\n  \"numberOfAttendees\": 2,\n  \"promoCode\": \"SUMMER25\",\n  \"customerId\": \"customer123\",\n  \"addons\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/events/{{event_id}}/book",
+              "host": ["{{base_url}}"],
+              "path": ["events", "{{event_id}}", "book"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Event Price Breakdown",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/events/{{event_id}}/price-breakdown?numberOfAttendees=2&promoCode=SUMMER25&addons=[]",
+              "host": ["{{base_url}}"],
+              "path": ["events", "{{event_id}}", "price-breakdown"],
+              "query": [
+                {
+                  "key": "numberOfAttendees",
+                  "value": "2"
+                },
+                {
+                  "key": "promoCode",
+                  "value": "SUMMER25"
+                },
+                {
+                  "key": "addons",
+                  "value": "[]"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
