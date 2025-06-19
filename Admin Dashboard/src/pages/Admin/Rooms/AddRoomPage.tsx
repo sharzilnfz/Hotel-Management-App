@@ -1,27 +1,19 @@
-import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -30,33 +22,40 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft, Upload, Plus, Edit, Trash } from "lucide-react";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Separator } from "@/components/ui/separator";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/components/ui/use-toast';
+import { createRoom, type CreateRoomData } from '@/services/roomService';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ArrowLeft, Edit, Plus, Trash, Upload } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import { useNavigate } from 'react-router-dom';
+import * as z from 'zod';
 
 const roomFormSchema = z.object({
-  name: z.string().min(2, { message: "Room name is required" }),
-  type: z.string().min(1, { message: "Room type is required" }),
-  category: z.string().min(1, { message: "Room category is required" }),
-  bedType: z.string().min(1, { message: "Bed type is required" }),
-  capacity: z.number().min(1, { message: "Capacity must be at least 1" }),
-  price: z.number().min(0, { message: "Price must be a positive number" }),
-  totalRooms: z.number().min(1, { message: "Must have at least 1 room" }),
-  description: z.string().min(10, { message: "Description must be at least 10 characters" }),
+  name: z.string().min(2, { message: 'Room name is required' }),
+  type: z.string().min(1, { message: 'Room type is required' }),
+  category: z.string().min(1, { message: 'Room category is required' }),
+  bedType: z.string().min(1, { message: 'Bed type is required' }),
+  capacity: z.number().min(1, { message: 'Capacity must be at least 1' }),
+  price: z.number().min(0, { message: 'Price must be a positive number' }),
+  totalRooms: z.number().min(1, { message: 'Must have at least 1 room' }),
+  description: z
+    .string()
+    .min(10, { message: 'Description must be at least 10 characters' }),
   isRefundable: z.boolean().default(true),
   refundPolicy: z.string().optional(),
 });
@@ -70,66 +69,67 @@ const AddRoomPage = () => {
   const form = useForm<RoomFormValues>({
     resolver: zodResolver(roomFormSchema),
     defaultValues: {
-      name: "",
-      type: "",
-      category: "",
-      bedType: "",
+      name: '',
+      type: '',
+      category: '',
+      bedType: '',
       capacity: 2,
       price: 0,
       totalRooms: 1,
-      description: "",
+      description: '',
       isRefundable: true,
-      refundPolicy: "Full refund if cancelled up to 48 hours before check-in. 50% refund if cancelled up to 24 hours before check-in.",
+      refundPolicy:
+        'Full refund if cancelled up to 48 hours before check-in. 50% refund if cancelled up to 24 hours before check-in.',
     },
   });
 
   const [formData, setFormData] = useState({
     breakfastIncluded: false,
-    checkInTime: "14:00",
-    checkOutTime: "12:00",
+    checkInTime: '14:00',
+    checkOutTime: '12:00',
     amenities: [],
     extras: [],
     payNow: true,
     payAtHotel: true,
     discount: {
-      name: "",
-      type: "percentage",
+      name: '',
+      type: 'percentage',
       value: 0,
       capacity: 0,
       active: false,
       publishWebsite: true,
-      publishApp: true
+      publishApp: true,
     },
-    cancellationPolicy: "flexible",
+    cancellationPolicy: 'flexible',
     publishWebsite: true,
     publishApp: true,
     active: true,
-    images: []
+    images: [],
   });
 
   const [availableAmenities, setAvailableAmenities] = useState([
-    { id: "wifi", label: "Free Wi-Fi" },
-    { id: "tv", label: "Flat-screen TV" },
-    { id: "ac", label: "Air conditioning" },
-    { id: "minibar", label: "Minibar" },
-    { id: "safe", label: "In-room safe" },
-    { id: "workspace", label: "Work desk" },
-    { id: "balcony", label: "Private balcony" },
-    { id: "bathtub", label: "Bathtub" },
-    { id: "shower", label: "Rain shower" },
-    { id: "coffeeMaker", label: "Coffee maker" },
-    { id: "hairDryer", label: "Hair dryer" },
-    { id: "iron", label: "Iron and ironing board" },
-    { id: "robe", label: "Bathrobes and slippers" }
+    { id: 'wifi', label: 'Free Wi-Fi' },
+    { id: 'tv', label: 'Flat-screen TV' },
+    { id: 'ac', label: 'Air conditioning' },
+    { id: 'minibar', label: 'Minibar' },
+    { id: 'safe', label: 'In-room safe' },
+    { id: 'workspace', label: 'Work desk' },
+    { id: 'balcony', label: 'Private balcony' },
+    { id: 'bathtub', label: 'Bathtub' },
+    { id: 'shower', label: 'Rain shower' },
+    { id: 'coffeeMaker', label: 'Coffee maker' },
+    { id: 'hairDryer', label: 'Hair dryer' },
+    { id: 'iron', label: 'Iron and ironing board' },
+    { id: 'robe', label: 'Bathrobes and slippers' },
   ]);
 
   const [amenityDialogOpen, setAmenityDialogOpen] = useState(false);
-  const [currentAmenity, setCurrentAmenity] = useState({ id: "", label: "" });
+  const [currentAmenity, setCurrentAmenity] = useState({ id: '', label: '' });
   const [isEditingAmenity, setIsEditingAmenity] = useState(false);
 
   // State for extras/add-ons
   const [extraDialogOpen, setExtraDialogOpen] = useState(false);
-  const [currentExtra, setCurrentExtra] = useState({ name: "", price: 0 });
+  const [currentExtra, setCurrentExtra] = useState({ name: '', price: 0 });
   const [isEditingExtra, setIsEditingExtra] = useState(false);
   const [currentExtraIndex, setCurrentExtraIndex] = useState(-1);
 
@@ -137,18 +137,20 @@ const AddRoomPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value, type } = e.target;
 
     if (type === 'number') {
       setFormData({
         ...formData,
-        [name]: parseFloat(value) || 0
+        [name]: parseFloat(value) || 0,
       });
     } else {
       setFormData({
         ...formData,
-        [name]: value
+        [name]: value,
       });
     }
   };
@@ -156,14 +158,14 @@ const AddRoomPage = () => {
   const handleSwitchChange = (name: string, value: boolean) => {
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -171,69 +173,76 @@ const AddRoomPage = () => {
     if (checked) {
       setFormData({
         ...formData,
-        amenities: [...formData.amenities, id]
+        amenities: [...formData.amenities, id],
       });
     } else {
       setFormData({
         ...formData,
-        amenities: formData.amenities.filter(item => item !== id)
+        amenities: formData.amenities.filter((item) => item !== id),
       });
     }
   };
 
   const handleAddAmenity = () => {
-    setCurrentAmenity({ id: "", label: "" });
+    setCurrentAmenity({ id: '', label: '' });
     setIsEditingAmenity(false);
     setAmenityDialogOpen(true);
   };
 
-  const handleEditAmenity = (amenity: { id: string, label: string }) => {
+  const handleEditAmenity = (amenity: { id: string; label: string }) => {
     setCurrentAmenity({ ...amenity });
     setIsEditingAmenity(true);
     setAmenityDialogOpen(true);
   };
 
   const handleDeleteAmenity = (id: string) => {
-    setAvailableAmenities(availableAmenities.filter(amenity => amenity.id !== id));
+    setAvailableAmenities(
+      availableAmenities.filter((amenity) => amenity.id !== id)
+    );
 
     if (formData.amenities.includes(id)) {
       setFormData({
         ...formData,
-        amenities: formData.amenities.filter(amenityId => amenityId !== id)
+        amenities: formData.amenities.filter((amenityId) => amenityId !== id),
       });
     }
 
     toast({
-      title: "Amenity Deleted",
-      description: "The amenity has been removed."
+      title: 'Amenity Deleted',
+      description: 'The amenity has been removed.',
     });
   };
 
   const saveAmenity = () => {
     if (!currentAmenity.label.trim() || !currentAmenity.id.trim()) {
       toast({
-        title: "Invalid Input",
-        description: "Both ID and Label are required.",
-        variant: "destructive"
+        title: 'Invalid Input',
+        description: 'Both ID and Label are required.',
+        variant: 'destructive',
       });
       return;
     }
 
     if (isEditingAmenity) {
-      setAvailableAmenities(availableAmenities.map(amenity =>
-        amenity.id === currentAmenity.id ? { ...currentAmenity } : amenity
-      ));
+      setAvailableAmenities(
+        availableAmenities.map((amenity) =>
+          amenity.id === currentAmenity.id ? { ...currentAmenity } : amenity
+        )
+      );
 
       toast({
-        title: "Amenity Updated",
-        description: `${currentAmenity.label} has been updated.`
+        title: 'Amenity Updated',
+        description: `${currentAmenity.label} has been updated.`,
       });
     } else {
-      if (availableAmenities.some(amenity => amenity.id === currentAmenity.id)) {
+      if (
+        availableAmenities.some((amenity) => amenity.id === currentAmenity.id)
+      ) {
         toast({
-          title: "Duplicate ID",
-          description: "This amenity ID already exists. Please use a unique ID.",
-          variant: "destructive"
+          title: 'Duplicate ID',
+          description:
+            'This amenity ID already exists. Please use a unique ID.',
+          variant: 'destructive',
         });
         return;
       }
@@ -241,8 +250,8 @@ const AddRoomPage = () => {
       setAvailableAmenities([...availableAmenities, { ...currentAmenity }]);
 
       toast({
-        title: "Amenity Added",
-        description: `${currentAmenity.label} has been added to the list.`
+        title: 'Amenity Added',
+        description: `${currentAmenity.label} has been added to the list.`,
       });
     }
 
@@ -251,13 +260,16 @@ const AddRoomPage = () => {
 
   // Extra/Add-on handlers
   const handleAddExtra = () => {
-    setCurrentExtra({ name: "", price: 0 });
+    setCurrentExtra({ name: '', price: 0 });
     setIsEditingExtra(false);
     setCurrentExtraIndex(-1);
     setExtraDialogOpen(true);
   };
 
-  const handleEditExtra = (extra: { name: string, price: number }, index: number) => {
+  const handleEditExtra = (
+    extra: { name: string; price: number },
+    index: number
+  ) => {
     setCurrentExtra({ ...extra });
     setIsEditingExtra(true);
     setCurrentExtraIndex(index);
@@ -267,30 +279,30 @@ const AddRoomPage = () => {
   const handleDeleteExtra = (index: number) => {
     setFormData({
       ...formData,
-      extras: formData.extras.filter((_, i) => i !== index)
+      extras: formData.extras.filter((_, i) => i !== index),
     });
 
     toast({
-      title: "Extra Deleted",
-      description: "The extra has been removed."
+      title: 'Extra Deleted',
+      description: 'The extra has been removed.',
     });
   };
 
   const saveExtra = () => {
     if (!currentExtra.name.trim()) {
       toast({
-        title: "Invalid Input",
-        description: "Name is required.",
-        variant: "destructive"
+        title: 'Invalid Input',
+        description: 'Name is required.',
+        variant: 'destructive',
       });
       return;
     }
 
     if (currentExtra.price < 0) {
       toast({
-        title: "Invalid Price",
-        description: "Price must be a positive number.",
-        variant: "destructive"
+        title: 'Invalid Price',
+        description: 'Price must be a positive number.',
+        variant: 'destructive',
       });
       return;
     }
@@ -302,23 +314,23 @@ const AddRoomPage = () => {
 
       setFormData({
         ...formData,
-        extras: updatedExtras
+        extras: updatedExtras,
       });
 
       toast({
-        title: "Extra Updated",
-        description: `${currentExtra.name} has been updated.`
+        title: 'Extra Updated',
+        description: `${currentExtra.name} has been updated.`,
       });
     } else {
       // Add new extra
       setFormData({
         ...formData,
-        extras: [...formData.extras, { ...currentExtra }]
+        extras: [...formData.extras, { ...currentExtra }],
       });
 
       toast({
-        title: "Extra Added",
-        description: `${currentExtra.name} has been added.`
+        title: 'Extra Added',
+        description: `${currentExtra.name} has been added.`,
       });
     }
 
@@ -328,18 +340,18 @@ const AddRoomPage = () => {
   const handleFileSelect = () => {
     fileInputRef.current?.click();
   };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       const fileArray = Array.from(files);
-      setSelectedFiles(prev => [...prev, ...fileArray]);
+      // Store actual files for backend upload
+      setSelectedFiles((prev) => [...prev, ...fileArray]);
 
-      // Create preview URLs
-      const imageUrls = fileArray.map(file => URL.createObjectURL(file));
-      setFormData(prev => ({
+      // Create preview URLs for UI display only
+      const imageUrls = fileArray.map((file) => URL.createObjectURL(file));
+      setFormData((prev) => ({
         ...prev,
-        images: [...prev.images, ...imageUrls]
+        images: [...prev.images, ...imageUrls], // These are just for preview
       }));
     }
   };
@@ -353,7 +365,6 @@ const AddRoomPage = () => {
     e.preventDefault();
     setIsDragging(false);
   };
-
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
@@ -361,98 +372,76 @@ const AddRoomPage = () => {
     const files = e.dataTransfer.files;
     if (files) {
       const fileArray = Array.from(files);
-      setSelectedFiles(prev => [...prev, ...fileArray]);
+      // Store actual files for backend upload
+      setSelectedFiles((prev) => [...prev, ...fileArray]);
 
-      // Create preview URLs
-      const imageUrls = fileArray.map(file => URL.createObjectURL(file));
-      setFormData(prev => ({
+      // Create preview URLs for UI display only
+      const imageUrls = fileArray.map((file) => URL.createObjectURL(file));
+      setFormData((prev) => ({
         ...prev,
-        images: [...prev.images, ...imageUrls]
+        images: [...prev.images, ...imageUrls], // These are just for preview
       }));
     }
-  };
-
-  const removeImage = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-    setFormData(prev => ({
+  };  const removeImage = (index: number) => {
+    // Remove from both actual files and preview URLs
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setFormData((prev) => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: prev.images.filter((_, i) => i !== index),
     }));
   };
 
   const onSubmit = async (values: RoomFormValues) => {
     try {
-      // Create FormData for file upload
-      const formDataObj = new FormData();
+      // Prepare room data for API
+      const roomData: CreateRoomData = {
+        name: values.name,
+        type: values.type,
+        category: values.category,
+        bedType: values.bedType,
+        capacity: values.capacity,
+        price: values.price,
+        totalRooms: values.totalRooms,
+        availableRooms: values.totalRooms, // Default to totalRooms for new rooms
+        description: values.description,
+        isRefundable: values.isRefundable,
+        refundPolicy: values.refundPolicy || '',
+        breakfastIncluded: formData.breakfastIncluded,
+        checkInTime: formData.checkInTime,
+        checkOutTime: formData.checkOutTime,
+        amenities: formData.amenities,
+        extras: formData.extras,
+        payNow: formData.payNow,
+        payAtHotel: formData.payAtHotel,
+        discount: formData.discount,
+        cancellationPolicy: formData.cancellationPolicy,
+        publishWebsite: formData.publishWebsite,
+        publishApp: formData.publishApp,
+        active: formData.active,
+      };
 
-      // Append form values from react-hook-form
-      formDataObj.append('name', values.name);
-      formDataObj.append('type', values.type);
-      formDataObj.append('category', values.category);
-      formDataObj.append('bedType', values.bedType);
-      formDataObj.append('capacity', values.capacity.toString());
-      formDataObj.append('price', values.price.toString());
-      formDataObj.append('totalRooms', values.totalRooms.toString());
-      formDataObj.append('description', values.description);
-      formDataObj.append('isRefundable', values.isRefundable.toString());
-      formDataObj.append('refundPolicy', values.refundPolicy || '');
+      console.log('=== Room Data Being Sent ===');
+      console.log(roomData);
+      console.log('=== Selected Files ===');
+      console.log(selectedFiles);
+      console.log('=== End Debug Info ===');
 
-      // Append additional form data as strings (backend expects string values)
-      formDataObj.append('breakfastIncluded', formData.breakfastIncluded.toString());
-      formDataObj.append('checkInTime', formData.checkInTime);
-      formDataObj.append('checkOutTime', formData.checkOutTime);
-      formDataObj.append('payNow', formData.payNow.toString());
-      formDataObj.append('payAtHotel', formData.payAtHotel.toString());
-      formDataObj.append('cancellationPolicy', formData.cancellationPolicy);
-      formDataObj.append('publishWebsite', formData.publishWebsite.toString());
-      formDataObj.append('publishApp', formData.publishApp.toString());
-      formDataObj.append('active', formData.active.toString());
+      // Call room service to create room
+      const createdRoom = await createRoom(roomData, selectedFiles);
 
-      // Append JSON fields (backend expects these as JSON strings)
-      formDataObj.append('amenities', JSON.stringify(formData.amenities));
-      formDataObj.append('extras', JSON.stringify(formData.extras));
-      formDataObj.append('discount', JSON.stringify(formData.discount));
-
-      // Append files
-      selectedFiles.forEach(file => {
-        formDataObj.append('images', file);
-      });
-
-      // Log all form data entries for debugging
-      console.log("=== Form Data Contents ===");
-      for (let [key, value] of formDataObj.entries()) {
-        console.log(`${key}:`, value);
-      }
-      console.log("=== End Form Data ===");
-
-      // Send data to backend
-      const response = await axios.post("http://localhost:4000/api/rooms", formDataObj, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-
-      if (response.data.success) {
-        toast({
-          title: "Room Added Successfully",
-          description: `${values.name} has been added to your inventory.`
-        });
-
-        // Navigate back to rooms list
-        navigate("/admin/rooms");
-      } else {
-        toast({
-          title: "Error",
-          description: response.data.message || "Failed to add room",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error("Error submitting room:", error);
       toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to add room",
-        variant: "destructive"
+        title: 'Room Added Successfully',
+        description: `${values.name} has been added to your inventory.`,
+      });
+
+      // Navigate back to rooms list
+      navigate('/admin/rooms');
+    } catch (error) {
+      console.error('Error submitting room:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to add room',
+        variant: 'destructive',
       });
     }
   };
@@ -463,7 +452,7 @@ const AddRoomPage = () => {
         <Button
           variant="outline"
           size="icon"
-          onClick={() => navigate("/admin/rooms")}
+          onClick={() => navigate('/admin/rooms')}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -477,7 +466,9 @@ const AddRoomPage = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>Room Details</CardTitle>
-                  <CardDescription>Enter the basic information about the room.</CardDescription>
+                  <CardDescription>
+                    Enter the basic information about the room.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -518,7 +509,9 @@ const AddRoomPage = () => {
                               <SelectItem value="deluxe">Deluxe</SelectItem>
                               <SelectItem value="premium">Premium</SelectItem>
                               <SelectItem value="suite">Suite</SelectItem>
-                              <SelectItem value="executive">Executive</SelectItem>
+                              <SelectItem value="executive">
+                                Executive
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -548,7 +541,9 @@ const AddRoomPage = () => {
                               <SelectItem value="double">Double</SelectItem>
                               <SelectItem value="twin">Twin</SelectItem>
                               <SelectItem value="family">Family</SelectItem>
-                              <SelectItem value="accessible">Accessible</SelectItem>
+                              <SelectItem value="accessible">
+                                Accessible
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -598,7 +593,9 @@ const AddRoomPage = () => {
                               min={1}
                               max={10}
                               {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                              onChange={(e) =>
+                                field.onChange(parseInt(e.target.value) || 1)
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -617,7 +614,9 @@ const AddRoomPage = () => {
                               type="number"
                               min={0}
                               {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              onChange={(e) =>
+                                field.onChange(parseFloat(e.target.value) || 0)
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -636,7 +635,9 @@ const AddRoomPage = () => {
                               type="number"
                               min={1}
                               {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                              onChange={(e) =>
+                                field.onChange(parseInt(e.target.value) || 1)
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -674,9 +675,13 @@ const AddRoomPage = () => {
                       <Switch
                         id="breakfastIncluded"
                         checked={formData.breakfastIncluded}
-                        onCheckedChange={(checked) => handleSwitchChange("breakfastIncluded", checked)}
+                        onCheckedChange={(checked) =>
+                          handleSwitchChange('breakfastIncluded', checked)
+                        }
                       />
-                      <Label htmlFor="breakfastIncluded">Breakfast Included</Label>
+                      <Label htmlFor="breakfastIncluded">
+                        Breakfast Included
+                      </Label>
                     </div>
                   </div>
 
@@ -693,12 +698,12 @@ const AddRoomPage = () => {
                             onChange={field.onChange}
                             modules={{
                               toolbar: [
-                                [{ 'header': [1, 2, 3, false] }],
+                                [{ header: [1, 2, 3, false] }],
                                 ['bold', 'italic', 'underline', 'strike'],
-                                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                                [{ 'indent': '-1' }, { 'indent': '+1' }],
-                                [{ 'align': [] }],
-                                ['clean']
+                                [{ list: 'ordered' }, { list: 'bullet' }],
+                                [{ indent: '-1' }, { indent: '+1' }],
+                                [{ align: [] }],
+                                ['clean'],
                               ],
                             }}
                             style={{ height: '250px', marginBottom: '50px' }}
@@ -715,7 +720,9 @@ const AddRoomPage = () => {
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle>Room Amenities</CardTitle>
-                    <CardDescription>Select the amenities available in this room type.</CardDescription>
+                    <CardDescription>
+                      Select the amenities available in this room type.
+                    </CardDescription>
                   </div>
                   <Button
                     type="button"
@@ -731,15 +738,23 @@ const AddRoomPage = () => {
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4">
                     {availableAmenities.map((amenity) => (
-                      <div key={amenity.id} className="flex items-start space-x-2">
+                      <div
+                        key={amenity.id}
+                        className="flex items-start space-x-2"
+                      >
                         <Checkbox
                           id={amenity.id}
                           checked={formData.amenities.includes(amenity.id)}
-                          onCheckedChange={(checked) => handleAmenityChange(amenity.id, checked === true)}
+                          onCheckedChange={(checked) =>
+                            handleAmenityChange(amenity.id, checked === true)
+                          }
                           className="mt-1"
                         />
                         <div className="flex flex-col">
-                          <Label htmlFor={amenity.id} className="flex items-center">
+                          <Label
+                            htmlFor={amenity.id}
+                            className="flex items-center"
+                          >
                             {amenity.label}
                             <div className="ml-2 flex space-x-1">
                               <Button
@@ -774,7 +789,9 @@ const AddRoomPage = () => {
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle>Add-ons & Extras (Optional)</CardTitle>
-                    <CardDescription>Add extra services with additional pricing</CardDescription>
+                    <CardDescription>
+                      Add extra services with additional pricing
+                    </CardDescription>
                   </div>
                   <Button
                     type="button"
@@ -790,15 +807,21 @@ const AddRoomPage = () => {
                 <CardContent>
                   {formData.extras.length === 0 ? (
                     <div className="text-center py-4 text-muted-foreground">
-                      No extras added. Click "Add Extra" to add optional services.
+                      No extras added. Click "Add Extra" to add optional
+                      services.
                     </div>
                   ) : (
                     <div className="space-y-3">
                       {formData.extras.map((extra, index) => (
-                        <div key={index} className="flex items-center justify-between border rounded-md p-3">
+                        <div
+                          key={index}
+                          className="flex items-center justify-between border rounded-md p-3"
+                        >
                           <div className="space-y-1">
                             <p className="font-medium">{extra.name}</p>
-                            <p className="text-sm text-muted-foreground">Price: ${extra.price}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Price: ${extra.price}
+                            </p>
                           </div>
                           <div className="flex space-x-2">
                             <Button
@@ -829,7 +852,9 @@ const AddRoomPage = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>Payment & Booking Options</CardTitle>
-                  <CardDescription>Configure payment and booking settings.</CardDescription>
+                  <CardDescription>
+                    Configure payment and booking settings.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-4">
@@ -838,22 +863,30 @@ const AddRoomPage = () => {
                       <div className="flex items-center justify-between border p-4 rounded-md">
                         <div>
                           <p className="font-medium">Pay Now</p>
-                          <p className="text-sm text-gray-500">Allow guests to pay online when booking</p>
+                          <p className="text-sm text-gray-500">
+                            Allow guests to pay online when booking
+                          </p>
                         </div>
                         <Switch
                           checked={formData.payNow}
-                          onCheckedChange={(checked) => handleSwitchChange("payNow", checked)}
+                          onCheckedChange={(checked) =>
+                            handleSwitchChange('payNow', checked)
+                          }
                         />
                       </div>
 
                       <div className="flex items-center justify-between border p-4 rounded-md">
                         <div>
                           <p className="font-medium">Pay at Hotel</p>
-                          <p className="text-sm text-gray-500">Allow guests to pay during check-in</p>
+                          <p className="text-sm text-gray-500">
+                            Allow guests to pay during check-in
+                          </p>
                         </div>
                         <Switch
                           checked={formData.payAtHotel}
-                          onCheckedChange={(checked) => handleSwitchChange("payAtHotel", checked)}
+                          onCheckedChange={(checked) =>
+                            handleSwitchChange('payAtHotel', checked)
+                          }
                         />
                       </div>
                     </div>
@@ -888,9 +921,7 @@ const AddRoomPage = () => {
                           </FormControl>
                         </FormItem>
                       )}
-                    />
-
-                    {form.watch("isRefundable") && (
+                    />                    {form.watch('isRefundable') && (
                       <FormField
                         control={form.control}
                         name="refundPolicy"
@@ -898,8 +929,16 @@ const AddRoomPage = () => {
                           <FormItem>
                             <FormLabel>Refund Policy</FormLabel>
                             <Select
-                              onValueChange={field.onChange}
-                              value={field.value || ""}
+                              onValueChange={(value) => {
+                                if (value === 'custom') {
+                                  // Reset to empty string when switching to custom
+                                  field.onChange('');
+                                } else {
+                                  // Set the predefined policy value
+                                  field.onChange(value);
+                                }
+                              }}
+                              value={field.value === '' || (field.value && !field.value.startsWith('Full refund') && !field.value.startsWith('No refunds')) ? 'custom' : field.value}
                             >
                               <FormControl>
                                 <SelectTrigger>
@@ -919,27 +958,33 @@ const AddRoomPage = () => {
                                 <SelectItem value="No refunds available for this booking.">
                                   No Refunds
                                 </SelectItem>
-                                <SelectItem value="custom">
-                                  Custom
-                                </SelectItem>
+                                <SelectItem value="custom">Custom</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormDescription>
                               Or enter a custom refund policy below
                             </FormDescription>
-                            {field.value === "custom" && (
+                            {(field.value === '' || (field.value && !field.value.startsWith('Full refund') && !field.value.startsWith('No refunds'))) && (
                               <ReactQuill
                                 theme="snow"
-                                value={field.value === "custom" ? "" : field.value}
-                                onChange={field.onChange}
+                                value={field.value === 'custom' ? '' : field.value || ''}
+                                onChange={(value) => {
+                                  // Only update if we're in custom mode
+                                  if (field.value === '' || (field.value && !field.value.startsWith('Full refund') && !field.value.startsWith('No refunds'))) {
+                                    field.onChange(value);
+                                  }
+                                }}
                                 modules={{
                                   toolbar: [
                                     ['bold', 'italic', 'underline'],
-                                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                                    ['clean']
+                                    [{ list: 'ordered' }, { list: 'bullet' }],
+                                    ['clean'],
                                   ],
                                 }}
-                                style={{ height: '150px', marginBottom: '50px' }}
+                                style={{
+                                  height: '150px',
+                                  marginBottom: '50px',
+                                }}
                               />
                             )}
                             <FormMessage />
@@ -949,9 +994,12 @@ const AddRoomPage = () => {
                     )}
                   </div>
 
-                  {!form.watch("isRefundable") && (
+                  {!form.watch('isRefundable') && (
                     <div className="bg-muted p-3 rounded-md">
-                      <p className="text-sm text-muted-foreground">This is a non-refundable room. No refunds will be provided for cancellations.</p>
+                      <p className="text-sm text-muted-foreground">
+                        This is a non-refundable room. No refunds will be
+                        provided for cancellations.
+                      </p>
                     </div>
                   )}
 
@@ -960,16 +1008,24 @@ const AddRoomPage = () => {
                   <div className="space-y-4">
                     <Label>Cancellation Policy</Label>
                     <Select
-                      onValueChange={(value) => handleSelectChange("cancellationPolicy", value)}
+                      onValueChange={(value) =>
+                        handleSelectChange('cancellationPolicy', value)
+                      }
                       value={formData.cancellationPolicy}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select policy" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="flexible">Flexible (24 hour notice)</SelectItem>
-                        <SelectItem value="moderate">Moderate (3 days notice)</SelectItem>
-                        <SelectItem value="strict">Strict (7 days notice)</SelectItem>
+                        <SelectItem value="flexible">
+                          Flexible (24 hour notice)
+                        </SelectItem>
+                        <SelectItem value="moderate">
+                          Moderate (3 days notice)
+                        </SelectItem>
+                        <SelectItem value="strict">
+                          Strict (7 days notice)
+                        </SelectItem>
                         <SelectItem value="custom">Custom</SelectItem>
                       </SelectContent>
                     </Select>
@@ -986,14 +1042,19 @@ const AddRoomPage = () => {
                 </CardHeader>
                 <CardContent>
                   <div
-                    className={`border-2 border-dashed rounded-md p-6 flex flex-col items-center text-center ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-                      }`}
+                    className={`border-2 border-dashed rounded-md p-6 flex flex-col items-center text-center ${
+                      isDragging
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-300'
+                    }`}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                   >
                     <Upload className="h-10 w-10 text-gray-400 mb-2" />
-                    <p className="text-sm font-medium">Drag & drop images here</p>
+                    <p className="text-sm font-medium">
+                      Drag & drop images here
+                    </p>
                     <p className="text-xs text-gray-500 mt-1">or</p>
                     <Button
                       className="mt-2"
@@ -1045,7 +1106,9 @@ const AddRoomPage = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>Discount Settings</CardTitle>
-                  <CardDescription>Set special rates and discounts</CardDescription>
+                  <CardDescription>
+                    Set special rates and discounts
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -1058,8 +1121,8 @@ const AddRoomPage = () => {
                           ...formData,
                           discount: {
                             ...formData.discount,
-                            active: checked
-                          }
+                            active: checked,
+                          },
                         });
                       }}
                     />
@@ -1068,7 +1131,9 @@ const AddRoomPage = () => {
                   {formData.discount.active && (
                     <div className="space-y-4 pt-2">
                       <div className="space-y-2">
-                        <Label htmlFor="discountName">Discount Name (Optional)</Label>
+                        <Label htmlFor="discountName">
+                          Discount Name (Optional)
+                        </Label>
                         <Input
                           id="discountName"
                           value={formData.discount.name}
@@ -1077,8 +1142,8 @@ const AddRoomPage = () => {
                               ...formData,
                               discount: {
                                 ...formData.discount,
-                                name: e.target.value
-                              }
+                                name: e.target.value,
+                              },
                             });
                           }}
                           placeholder="e.g., Summer Special"
@@ -1094,14 +1159,14 @@ const AddRoomPage = () => {
                               id="percentage"
                               name="discountType"
                               value="percentage"
-                              checked={formData.discount.type === "percentage"}
+                              checked={formData.discount.type === 'percentage'}
                               onChange={() => {
                                 setFormData({
                                   ...formData,
                                   discount: {
                                     ...formData.discount,
-                                    type: "percentage"
-                                  }
+                                    type: 'percentage',
+                                  },
                                 });
                               }}
                             />
@@ -1114,14 +1179,14 @@ const AddRoomPage = () => {
                               id="fixed"
                               name="discountType"
                               value="fixed"
-                              checked={formData.discount.type === "fixed"}
+                              checked={formData.discount.type === 'fixed'}
                               onChange={() => {
                                 setFormData({
                                   ...formData,
                                   discount: {
                                     ...formData.discount,
-                                    type: "fixed"
-                                  }
+                                    type: 'fixed',
+                                  },
                                 });
                               }}
                             />
@@ -1132,7 +1197,10 @@ const AddRoomPage = () => {
 
                       <div className="space-y-2">
                         <Label htmlFor="discountValue">
-                          Discount {formData.discount.type === "percentage" ? "Percentage" : "Amount"}
+                          Discount{' '}
+                          {formData.discount.type === 'percentage'
+                            ? 'Percentage'
+                            : 'Amount'}
                         </Label>
                         <Input
                           id="discountValue"
@@ -1143,17 +1211,23 @@ const AddRoomPage = () => {
                               ...formData,
                               discount: {
                                 ...formData.discount,
-                                value: parseFloat(e.target.value) || 0
-                              }
+                                value: parseFloat(e.target.value) || 0,
+                              },
                             });
                           }}
                           min={0}
-                          max={formData.discount.type === "percentage" ? 100 : undefined}
+                          max={
+                            formData.discount.type === 'percentage'
+                              ? 100
+                              : undefined
+                          }
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="discountCapacity">Guest Limit (0 = unlimited)</Label>
+                        <Label htmlFor="discountCapacity">
+                          Guest Limit (0 = unlimited)
+                        </Label>
                         <Input
                           id="discountCapacity"
                           type="number"
@@ -1163,8 +1237,8 @@ const AddRoomPage = () => {
                               ...formData,
                               discount: {
                                 ...formData.discount,
-                                capacity: parseInt(e.target.value) || 0
-                              }
+                                capacity: parseInt(e.target.value) || 0,
+                              },
                             });
                           }}
                           min={0}
@@ -1178,39 +1252,53 @@ const AddRoomPage = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>Publishing Options</CardTitle>
-                  <CardDescription>Control where this room appears</CardDescription>
+                  <CardDescription>
+                    Control where this room appears
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">Publish on Website</p>
-                      <p className="text-sm text-gray-500">Show this room on the hotel website</p>
+                      <p className="text-sm text-gray-500">
+                        Show this room on the hotel website
+                      </p>
                     </div>
                     <Switch
                       checked={formData.publishWebsite}
-                      onCheckedChange={(checked) => handleSwitchChange("publishWebsite", checked)}
+                      onCheckedChange={(checked) =>
+                        handleSwitchChange('publishWebsite', checked)
+                      }
                     />
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">Publish on Mobile App</p>
-                      <p className="text-sm text-gray-500">Show this room in the mobile app</p>
+                      <p className="text-sm text-gray-500">
+                        Show this room in the mobile app
+                      </p>
                     </div>
                     <Switch
                       checked={formData.publishApp}
-                      onCheckedChange={(checked) => handleSwitchChange("publishApp", checked)}
+                      onCheckedChange={(checked) =>
+                        handleSwitchChange('publishApp', checked)
+                      }
                     />
                   </div>
 
                   <div className="flex items-center justify-between pt-2">
                     <div>
                       <p className="font-medium">Room Status</p>
-                      <p className="text-sm text-gray-500">Is this room active and bookable?</p>
+                      <p className="text-sm text-gray-500">
+                        Is this room active and bookable?
+                      </p>
                     </div>
                     <Switch
                       checked={formData.active}
-                      onCheckedChange={(checked) => handleSwitchChange("active", checked)}
+                      onCheckedChange={(checked) =>
+                        handleSwitchChange('active', checked)
+                      }
                     />
                   </div>
                 </CardContent>
@@ -1218,10 +1306,18 @@ const AddRoomPage = () => {
 
               <Card>
                 <CardContent className="pt-6">
-                  <Button type="submit" className="w-full bg-hotel-primary hover:bg-opacity-90">
+                  <Button
+                    type="submit"
+                    className="w-full bg-hotel-primary hover:bg-opacity-90"
+                  >
                     Save Room
                   </Button>
-                  <Button type="button" variant="outline" className="w-full mt-2" onClick={() => navigate("/admin/rooms")}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full mt-2"
+                    onClick={() => navigate('/admin/rooms')}
+                  >
                     Cancel
                   </Button>
                 </CardContent>
@@ -1234,7 +1330,9 @@ const AddRoomPage = () => {
       <Dialog open={amenityDialogOpen} onOpenChange={setAmenityDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>{isEditingAmenity ? "Edit Amenity" : "Add New Amenity"}</DialogTitle>
+            <DialogTitle>
+              {isEditingAmenity ? 'Edit Amenity' : 'Add New Amenity'}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -1242,11 +1340,15 @@ const AddRoomPage = () => {
               <Input
                 id="amenity-id"
                 value={currentAmenity.id}
-                onChange={(e) => setCurrentAmenity({ ...currentAmenity, id: e.target.value })}
+                onChange={(e) =>
+                  setCurrentAmenity({ ...currentAmenity, id: e.target.value })
+                }
                 placeholder="e.g., wifi"
                 disabled={isEditingAmenity}
               />
-              <p className="text-xs text-gray-500">Unique identifier for this amenity</p>
+              <p className="text-xs text-gray-500">
+                Unique identifier for this amenity
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -1254,7 +1356,12 @@ const AddRoomPage = () => {
               <Input
                 id="amenity-label"
                 value={currentAmenity.label}
-                onChange={(e) => setCurrentAmenity({ ...currentAmenity, label: e.target.value })}
+                onChange={(e) =>
+                  setCurrentAmenity({
+                    ...currentAmenity,
+                    label: e.target.value,
+                  })
+                }
                 placeholder="e.g., Free Wi-Fi"
               />
               <p className="text-xs text-gray-500">Name displayed to users</p>
@@ -1268,11 +1375,8 @@ const AddRoomPage = () => {
             >
               Cancel
             </Button>
-            <Button
-              type="button"
-              onClick={saveAmenity}
-            >
-              {isEditingAmenity ? "Update" : "Add"} Amenity
+            <Button type="button" onClick={saveAmenity}>
+              {isEditingAmenity ? 'Update' : 'Add'} Amenity
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1282,7 +1386,9 @@ const AddRoomPage = () => {
       <Dialog open={extraDialogOpen} onOpenChange={setExtraDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>{isEditingExtra ? "Edit Extra" : "Add New Extra"}</DialogTitle>
+            <DialogTitle>
+              {isEditingExtra ? 'Edit Extra' : 'Add New Extra'}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -1290,7 +1396,9 @@ const AddRoomPage = () => {
               <Input
                 id="extra-name"
                 value={currentExtra.name}
-                onChange={(e) => setCurrentExtra({ ...currentExtra, name: e.target.value })}
+                onChange={(e) =>
+                  setCurrentExtra({ ...currentExtra, name: e.target.value })
+                }
                 placeholder="e.g., Hot Stones"
               />
               <p className="text-xs text-gray-500">Name of the extra service</p>
@@ -1304,13 +1412,17 @@ const AddRoomPage = () => {
                 min="0"
                 step="0.01"
                 value={currentExtra.price}
-                onChange={(e) => setCurrentExtra({
-                  ...currentExtra,
-                  price: parseFloat(e.target.value) || 0
-                })}
+                onChange={(e) =>
+                  setCurrentExtra({
+                    ...currentExtra,
+                    price: parseFloat(e.target.value) || 0,
+                  })
+                }
                 placeholder="e.g., 15.00"
               />
-              <p className="text-xs text-gray-500">Additional cost for this service</p>
+              <p className="text-xs text-gray-500">
+                Additional cost for this service
+              </p>
             </div>
           </div>
           <DialogFooter>
@@ -1321,11 +1433,8 @@ const AddRoomPage = () => {
             >
               Cancel
             </Button>
-            <Button
-              type="button"
-              onClick={saveExtra}
-            >
-              {isEditingExtra ? "Update" : "Add"} Extra
+            <Button type="button" onClick={saveExtra}>
+              {isEditingExtra ? 'Update' : 'Add'} Extra
             </Button>
           </DialogFooter>
         </DialogContent>
