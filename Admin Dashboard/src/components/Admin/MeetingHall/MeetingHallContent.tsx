@@ -1,83 +1,78 @@
-import { useState, useEffect } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Calendar as CalendarIcon,
-  Search,
-  Edit,
-  Trash2,
-  PlusCircle,
-  Users,
-  Download,
-  CalendarRange,
-  FileText,
-  Building2,
-  Phone,
-  Mail,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  MessageSquare,
-  Tag,
-  Loader2,
-  ChevronLeft,
-  ChevronRight,
-  Filter
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/select';
 import {
-  format,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  isSameMonth,
-  isSameDay,
-  startOfWeek,
-  endOfWeek,
-  isToday,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/use-toast';
+import axios from 'axios';
+import {
   addMonths,
-  subMonths,
-  parseISO,
+  eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isSameDay,
+  isSameMonth,
+  isToday,
   isWithinInterval,
-  addDays,
-  isBefore,
-  isAfter
-} from "date-fns";
-import axios from "axios";
-import { useToast } from "@/components/ui/use-toast";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+  parseISO,
+  startOfMonth,
+  startOfWeek,
+  subMonths,
+} from 'date-fns';
+import {
+  AlertCircle,
+  Building2,
+  Calendar as CalendarIcon,
+  CalendarRange,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Download,
+  Edit,
+  FileText,
+  Loader2,
+  Mail,
+  MessageSquare,
+  Phone,
+  PlusCircle,
+  Search,
+  Tag,
+  Trash2,
+  Users,
+  XCircle,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 // API base URL
-const API_BASE_URL = "http://localhost:4000/api";
+const API_BASE_URL = 'http://localhost:4000/api';
 
 // Mock data for meeting halls
 // const meetingHalls = [
@@ -131,147 +126,148 @@ const API_BASE_URL = "http://localhost:4000/api";
 // Mock data for bookings
 const bookings = [
   {
-    id: "BK-001",
-    hallName: "Grand Ballroom",
-    client: "ABC Corporation",
-    eventType: "Annual Conference",
-    startDate: "2025-05-10",
-    endDate: "2025-05-12",
+    id: 'BK-001',
+    hallName: 'Grand Ballroom',
+    client: 'ABC Corporation',
+    eventType: 'Annual Conference',
+    startDate: '2025-05-10',
+    endDate: '2025-05-12',
     attendees: 350,
-    status: "Confirmed"
+    status: 'Confirmed',
   },
   {
-    id: "BK-002",
-    hallName: "Conference Room A",
-    client: "XYZ Inc.",
-    eventType: "Board Meeting",
-    startDate: "2025-04-15",
-    endDate: "2025-04-15",
+    id: 'BK-002',
+    hallName: 'Conference Room A',
+    client: 'XYZ Inc.',
+    eventType: 'Board Meeting',
+    startDate: '2025-04-15',
+    endDate: '2025-04-15',
     attendees: 15,
-    status: "Confirmed"
+    status: 'Confirmed',
   },
   {
-    id: "BK-003",
-    hallName: "Executive Boardroom",
-    client: "Tech Solutions LLC",
-    eventType: "Client Presentation",
-    startDate: "2025-04-20",
-    endDate: "2025-04-20",
+    id: 'BK-003',
+    hallName: 'Executive Boardroom',
+    client: 'Tech Solutions LLC',
+    eventType: 'Client Presentation',
+    startDate: '2025-04-20',
+    endDate: '2025-04-20',
     attendees: 12,
-    status: "Pending"
+    status: 'Pending',
   },
   {
-    id: "BK-004",
-    hallName: "Seminar Room",
-    client: "University of Technology",
-    eventType: "Workshop",
-    startDate: "2025-06-05",
-    endDate: "2025-06-07",
+    id: 'BK-004',
+    hallName: 'Seminar Room',
+    client: 'University of Technology',
+    eventType: 'Workshop',
+    startDate: '2025-06-05',
+    endDate: '2025-06-07',
     attendees: 75,
-    status: "Pending"
-  }
+    status: 'Pending',
+  },
 ];
 
 // Mock data for new booking requests
 const bookingRequests = [
   {
-    id: "REQ-001",
-    firstName: "John",
-    lastName: "Smith",
-    companyName: "Acme Corp",
-    email: "john.smith@acmecorp.com",
-    phone: "555-123-4567",
-    preferredDate: "2025-06-15",
-    preferredTime: "10:00 AM",
-    hallName: "Grand Ballroom",
+    id: 'REQ-001',
+    firstName: 'John',
+    lastName: 'Smith',
+    companyName: 'Acme Corp',
+    email: 'john.smith@acmecorp.com',
+    phone: '555-123-4567',
+    preferredDate: '2025-06-15',
+    preferredTime: '10:00 AM',
+    hallName: 'Grand Ballroom',
     attendees: 150,
-    purpose: "Annual Company Meeting",
-    additionalRequirements: "Need projector and sound system. Catering for lunch.",
-    submissionDate: "2025-04-01T14:30:00",
-    status: "New",
-    notes: "",
-    isNew: true
+    purpose: 'Annual Company Meeting',
+    additionalRequirements:
+      'Need projector and sound system. Catering for lunch.',
+    submissionDate: '2025-04-01T14:30:00',
+    status: 'New',
+    notes: '',
+    isNew: true,
   },
   {
-    id: "REQ-002",
-    firstName: "Sarah",
-    lastName: "Johnson",
-    companyName: "Tech Innovations",
-    email: "sarah.j@techinnovations.com",
-    phone: "555-222-3333",
-    preferredDate: "2025-05-20",
-    preferredTime: "2:00 PM",
-    hallName: "Conference Room B",
+    id: 'REQ-002',
+    firstName: 'Sarah',
+    lastName: 'Johnson',
+    companyName: 'Tech Innovations',
+    email: 'sarah.j@techinnovations.com',
+    phone: '555-222-3333',
+    preferredDate: '2025-05-20',
+    preferredTime: '2:00 PM',
+    hallName: 'Conference Room B',
     attendees: 30,
-    purpose: "Product Launch Planning",
-    additionalRequirements: "Video conferencing equipment needed",
-    submissionDate: "2025-04-02T09:15:00",
-    status: "Contacted",
-    notes: "Called on 04/05 - they want to confirm by end of week",
-    isNew: false
+    purpose: 'Product Launch Planning',
+    additionalRequirements: 'Video conferencing equipment needed',
+    submissionDate: '2025-04-02T09:15:00',
+    status: 'Contacted',
+    notes: 'Called on 04/05 - they want to confirm by end of week',
+    isNew: false,
   },
   {
-    id: "REQ-003",
-    firstName: "Michael",
-    lastName: "Williams",
-    companyName: "Global Finance",
-    email: "m.williams@globalfinance.com",
-    phone: "555-444-5555",
-    preferredDate: "2025-06-10",
-    preferredTime: "9:00 AM",
-    hallName: "Executive Boardroom",
+    id: 'REQ-003',
+    firstName: 'Michael',
+    lastName: 'Williams',
+    companyName: 'Global Finance',
+    email: 'm.williams@globalfinance.com',
+    phone: '555-444-5555',
+    preferredDate: '2025-06-10',
+    preferredTime: '9:00 AM',
+    hallName: 'Executive Boardroom',
     attendees: 15,
-    purpose: "Board Meeting",
-    additionalRequirements: "Coffee service, presentation materials",
-    submissionDate: "2025-04-03T16:45:00",
-    status: "Confirmed",
-    notes: "Deposit received 04/07",
-    isNew: false
+    purpose: 'Board Meeting',
+    additionalRequirements: 'Coffee service, presentation materials',
+    submissionDate: '2025-04-03T16:45:00',
+    status: 'Confirmed',
+    notes: 'Deposit received 04/07',
+    isNew: false,
   },
   {
-    id: "REQ-004",
-    firstName: "Emily",
-    lastName: "Brown",
-    companyName: "Creative Designs",
-    email: "emily@creativedesigns.com",
-    phone: "555-666-7777",
-    preferredDate: "2025-07-05",
-    preferredTime: "1:00 PM",
-    hallName: "Conference Room A",
+    id: 'REQ-004',
+    firstName: 'Emily',
+    lastName: 'Brown',
+    companyName: 'Creative Designs',
+    email: 'emily@creativedesigns.com',
+    phone: '555-666-7777',
+    preferredDate: '2025-07-05',
+    preferredTime: '1:00 PM',
+    hallName: 'Conference Room A',
     attendees: 25,
-    purpose: "Design Workshop",
-    additionalRequirements: "Whiteboards, display areas for design materials",
-    submissionDate: "2025-04-05T11:20:00",
-    status: "Declined",
-    notes: "Room unavailable on requested date, no alternative dates worked",
-    isNew: false
+    purpose: 'Design Workshop',
+    additionalRequirements: 'Whiteboards, display areas for design materials',
+    submissionDate: '2025-04-05T11:20:00',
+    status: 'Declined',
+    notes: 'Room unavailable on requested date, no alternative dates worked',
+    isNew: false,
   },
   {
-    id: "REQ-005",
-    firstName: "Robert",
-    lastName: "Davis",
-    companyName: "Davis & Associates",
-    email: "robert@davisassociates.com",
-    phone: "555-888-9999",
-    preferredDate: "2025-06-22",
-    preferredTime: "11:00 AM",
-    hallName: "Seminar Room",
+    id: 'REQ-005',
+    firstName: 'Robert',
+    lastName: 'Davis',
+    companyName: 'Davis & Associates',
+    email: 'robert@davisassociates.com',
+    phone: '555-888-9999',
+    preferredDate: '2025-06-22',
+    preferredTime: '11:00 AM',
+    hallName: 'Seminar Room',
     attendees: 60,
-    purpose: "Legal Seminar",
-    additionalRequirements: "Microphones, recording equipment",
-    submissionDate: "2025-04-08T13:10:00",
-    status: "New",
-    notes: "",
-    isNew: true
-  }
+    purpose: 'Legal Seminar',
+    additionalRequirements: 'Microphones, recording equipment',
+    submissionDate: '2025-04-08T13:10:00',
+    status: 'New',
+    notes: '',
+    isNew: true,
+  },
 ];
 
 const MeetingHallContent = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [selectedTab, setSelectedTab] = useState("halls");
-  const [newStatus, setNewStatus] = useState("");
-  const [newNote, setNewNote] = useState("");
+  const [selectedTab, setSelectedTab] = useState('halls');
+  const [newStatus, setNewStatus] = useState('');
+  const [newNote, setNewNote] = useState('');
   const { toast } = useToast();
 
   // State for API data
@@ -281,14 +277,14 @@ const MeetingHallContent = () => {
   const [loading, setLoading] = useState({
     halls: false,
     bookings: false,
-    requests: false
+    requests: false,
   });
 
   // Calendar view state
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedBooking, setSelectedBooking] = useState(null);
-  const [selectedHall, setSelectedHall] = useState("all");
+  const [selectedHall, setSelectedHall] = useState('all');
   // Add state for the dialog near the other state declarations
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -301,7 +297,7 @@ const MeetingHallContent = () => {
     size: '',
     price: '',
     amenities: '',
-    status: 'Available'
+    status: 'Available',
   });
   const [editHall, setEditHall] = useState({
     name: '',
@@ -309,34 +305,37 @@ const MeetingHallContent = () => {
     size: '',
     price: '',
     amenities: '',
-    status: 'Available'
+    status: 'Available',
   });
 
   // Fetch meeting halls
   useEffect(() => {
     const fetchHalls = async () => {
-      if (selectedTab === "halls") {
-        setLoading(prev => ({ ...prev, halls: true }));
+      if (selectedTab === 'halls') {
+        setLoading((prev) => ({ ...prev, halls: true }));
         try {
-          const response = await axios.get(`${API_BASE_URL}/meeting-hall/halls`);
+          const response = await axios.get(
+            `${API_BASE_URL}/meeting-hall/halls`
+          );
 
           if (response.data.status === 'success') {
             setHalls(response.data.data.halls);
           } else {
-            throw new Error("Failed to fetch meeting halls");
+            throw new Error('Failed to fetch meeting halls');
           }
         } catch (error) {
-          console.error("Error fetching halls:", error);
+          console.error('Error fetching halls:', error);
           toast({
-            title: "Error",
-            description: "Failed to load meeting halls. Using sample data instead.",
-            variant: "destructive",
+            title: 'Error',
+            description:
+              'Failed to load meeting halls. Using sample data instead.',
+            variant: 'destructive',
           });
 
           // Fallback to mock data
           // setHalls(meetingHalls);
         } finally {
-          setLoading(prev => ({ ...prev, halls: false }));
+          setLoading((prev) => ({ ...prev, halls: false }));
         }
       }
     };
@@ -347,35 +346,39 @@ const MeetingHallContent = () => {
   // Fetch bookings
   useEffect(() => {
     const fetchBookings = async () => {
-      if (selectedTab === "bookings") {
-        setLoading(prev => ({ ...prev, bookings: true }));
+      if (selectedTab === 'bookings') {
+        setLoading((prev) => ({ ...prev, bookings: true }));
         try {
-          const response = await axios.get(`${API_BASE_URL}/meeting-hall/bookings`);
+          const response = await axios.get(
+            `${API_BASE_URL}/meeting-hall/bookings`
+          );
 
           if (response.data.status === 'success') {
             // Format dates for display
-            const formattedBookings = response.data.data.bookings.map(booking => ({
-              ...booking,
-              id: booking.bookingId,
-              startDate: format(new Date(booking.startDate), 'yyyy-MM-dd'),
-              endDate: format(new Date(booking.endDate), 'yyyy-MM-dd')
-            }));
+            const formattedBookings = response.data.data.bookings.map(
+              (booking) => ({
+                ...booking,
+                id: booking.bookingId,
+                startDate: format(new Date(booking.startDate), 'yyyy-MM-dd'),
+                endDate: format(new Date(booking.endDate), 'yyyy-MM-dd'),
+              })
+            );
             setBookings(formattedBookings);
           } else {
-            throw new Error("Failed to fetch bookings");
+            throw new Error('Failed to fetch bookings');
           }
         } catch (error) {
-          console.error("Error fetching bookings:", error);
+          console.error('Error fetching bookings:', error);
           toast({
-            title: "Error",
-            description: "Failed to load bookings. Using sample data instead.",
-            variant: "destructive",
+            title: 'Error',
+            description: 'Failed to load bookings. Using sample data instead.',
+            variant: 'destructive',
           });
 
           // Fallback to mock data
           setBookings(bookings);
         } finally {
-          setLoading(prev => ({ ...prev, bookings: false }));
+          setLoading((prev) => ({ ...prev, bookings: false }));
         }
       }
     };
@@ -386,35 +389,43 @@ const MeetingHallContent = () => {
   // Fetch booking requests
   useEffect(() => {
     const fetchBookingRequests = async () => {
-      if (selectedTab === "requests") {
-        setLoading(prev => ({ ...prev, requests: true }));
+      if (selectedTab === 'requests') {
+        setLoading((prev) => ({ ...prev, requests: true }));
         try {
-          const response = await axios.get(`${API_BASE_URL}/meeting-hall/booking-requests`);
+          const response = await axios.get(
+            `${API_BASE_URL}/meeting-hall/booking-requests`
+          );
 
           if (response.data.status === 'success') {
             // Format dates for display
-            const formattedRequests = response.data.data.requests.map(request => ({
-              ...request,
-              id: request.requestId,
-              preferredDate: format(new Date(request.preferredDate), 'yyyy-MM-dd'),
-              submissionDate: request.submissionDate // Keep as ISO string for formatting in the component
-            }));
+            const formattedRequests = response.data.data.requests.map(
+              (request) => ({
+                ...request,
+                id: request.requestId,
+                preferredDate: format(
+                  new Date(request.preferredDate),
+                  'yyyy-MM-dd'
+                ),
+                submissionDate: request.submissionDate, // Keep as ISO string for formatting in the component
+              })
+            );
             setBookingRequests(formattedRequests);
           } else {
-            throw new Error("Failed to fetch booking requests");
+            throw new Error('Failed to fetch booking requests');
           }
         } catch (error) {
-          console.error("Error fetching booking requests:", error);
+          console.error('Error fetching booking requests:', error);
           toast({
-            title: "Error",
-            description: "Failed to load booking requests. Using sample data instead.",
-            variant: "destructive",
+            title: 'Error',
+            description:
+              'Failed to load booking requests. Using sample data instead.',
+            variant: 'destructive',
           });
 
           // Fallback to mock data
           setBookingRequests(bookingRequests);
         } finally {
-          setLoading(prev => ({ ...prev, requests: false }));
+          setLoading((prev) => ({ ...prev, requests: false }));
         }
       }
     };
@@ -424,36 +435,36 @@ const MeetingHallContent = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Available":
-        return "bg-green-100 text-green-800 hover:bg-green-200";
-      case "Booked":
-        return "bg-blue-100 text-blue-800 hover:bg-blue-200";
-      case "Maintenance":
-        return "bg-orange-100 text-orange-800 hover:bg-orange-200";
-      case "Confirmed":
-        return "bg-green-100 text-green-800 hover:bg-green-200";
-      case "Pending":
-        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-200";
-      case "New":
-        return "bg-blue-100 text-blue-800 hover:bg-blue-200";
-      case "Contacted":
-        return "bg-purple-100 text-purple-800 hover:bg-purple-200";
-      case "Declined":
-        return "bg-red-100 text-red-800 hover:bg-red-200";
+      case 'Available':
+        return 'bg-green-100 text-green-800 hover:bg-green-200';
+      case 'Booked':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+      case 'Maintenance':
+        return 'bg-orange-100 text-orange-800 hover:bg-orange-200';
+      case 'Confirmed':
+        return 'bg-green-100 text-green-800 hover:bg-green-200';
+      case 'Pending':
+        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
+      case 'New':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+      case 'Contacted':
+        return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
+      case 'Declined':
+        return 'bg-red-100 text-red-800 hover:bg-red-200';
       default:
-        return "bg-gray-100 text-gray-800";
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case "New":
+      case 'New':
         return <AlertCircle className="h-4 w-4" />;
-      case "Contacted":
+      case 'Contacted':
         return <MessageSquare className="h-4 w-4" />;
-      case "Confirmed":
+      case 'Confirmed':
         return <CheckCircle className="h-4 w-4" />;
-      case "Declined":
+      case 'Declined':
         return <XCircle className="h-4 w-4" />;
       default:
         return null;
@@ -467,21 +478,23 @@ const MeetingHallContent = () => {
     }
     setSelectedRequest(request);
     setNewStatus(request.status);
-    setNewNote("");
+    setNewNote('');
   };
 
   const markRequestAsRead = async (requestId) => {
     try {
-      await axios.patch(`${API_BASE_URL}/meeting-hall/booking-requests/${requestId}/mark-as-read`);
+      await axios.patch(
+        `${API_BASE_URL}/meeting-hall/booking-requests/${requestId}/mark-as-read`
+      );
 
       // Update local state to reflect the change
-      setBookingRequests(requests =>
-        requests.map(req =>
+      setBookingRequests((requests) =>
+        requests.map((req) =>
           req._id === requestId ? { ...req, isNew: false } : req
         )
       );
     } catch (error) {
-      console.error("Error marking request as read:", error);
+      console.error('Error marking request as read:', error);
     }
   };
 
@@ -494,14 +507,16 @@ const MeetingHallContent = () => {
         notes?: string;
         isNew?: boolean;
       } = {
-        status: newStatus
+        status: newStatus,
       };
 
       if (newNote.trim()) {
         // Append new note to existing notes
-        const existingNotes = selectedRequest.notes || "";
-        const timestamp = format(new Date(), "yyyy-MM-dd HH:mm");
-        const formattedNote = `${timestamp}: ${newNote}${existingNotes ? '\n\n' + existingNotes : ''}`;
+        const existingNotes = selectedRequest.notes || '';
+        const timestamp = format(new Date(), 'yyyy-MM-dd HH:mm');
+        const formattedNote = `${timestamp}: ${newNote}${
+          existingNotes ? '\n\n' + existingNotes : ''
+        }`;
         updateData.notes = formattedNote;
       }
 
@@ -512,16 +527,21 @@ const MeetingHallContent = () => {
 
       if (response.data.status === 'success') {
         // Update local state
-        setBookingRequests(requests =>
-          requests.map(req =>
+        setBookingRequests((requests) =>
+          requests.map((req) =>
             req._id === selectedRequest._id
-              ? { ...req, status: newStatus, notes: updateData.notes || req.notes, isNew: false }
+              ? {
+                  ...req,
+                  status: newStatus,
+                  notes: updateData.notes || req.notes,
+                  isNew: false,
+                }
               : req
           )
         );
 
         toast({
-          title: "Request Updated",
+          title: 'Request Updated',
           description: `The booking request has been updated successfully.`,
         });
 
@@ -529,19 +549,19 @@ const MeetingHallContent = () => {
         setSelectedRequest(null);
       }
     } catch (error) {
-      console.error("Error updating request:", error);
+      console.error('Error updating request:', error);
       toast({
-        title: "Error",
-        description: "Failed to update booking request. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to update booking request. Please try again.',
+        variant: 'destructive',
       });
     }
   };
 
   const handleExportData = () => {
     toast({
-      title: "Export Feature",
-      description: "Export functionality will be implemented in the future.",
+      title: 'Export Feature',
+      description: 'Export functionality will be implemented in the future.',
     });
   };
 
@@ -549,7 +569,10 @@ const MeetingHallContent = () => {
     return halls.filter(
       (hall) =>
         hall.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (hall.amenities && hall.amenities.some(amenity => amenity.toLowerCase().includes(searchQuery.toLowerCase()))) ||
+        (hall.amenities &&
+          hall.amenities.some((amenity) =>
+            amenity.toLowerCase().includes(searchQuery.toLowerCase())
+          )) ||
         hall.status.toLowerCase().includes(searchQuery.toLowerCase())
     );
   };
@@ -559,7 +582,10 @@ const MeetingHallContent = () => {
       (booking) =>
         booking.hallName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         booking.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (booking.eventType && booking.eventType.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (booking.eventType &&
+          booking.eventType
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())) ||
         booking.status.toLowerCase().includes(searchQuery.toLowerCase())
     );
   };
@@ -569,7 +595,10 @@ const MeetingHallContent = () => {
       (request) =>
         request.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         request.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (request.companyName && request.companyName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (request.companyName &&
+          request.companyName
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())) ||
         request.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         request.status.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -600,16 +629,25 @@ const MeetingHallContent = () => {
               getFilteredRequests().map((request) => (
                 <TableRow key={request.id || request._id}>
                   <TableCell className="font-medium">
-                    {request.isNew && <span className="inline-block h-2 w-2 rounded-full bg-blue-600 mr-2"></span>}
+                    {request.isNew && (
+                      <span className="inline-block h-2 w-2 rounded-full bg-blue-600 mr-2"></span>
+                    )}
                     {request.firstName} {request.lastName}
                   </TableCell>
                   <TableCell>{request.companyName}</TableCell>
                   <TableCell>{request.email}</TableCell>
                   <TableCell>{request.phone}</TableCell>
-                  <TableCell>{request.preferredDate} {request.preferredTime}</TableCell>
-                  <TableCell>{typeof request.submissionDate === 'string'
-                    ? format(new Date(request.submissionDate), "MMM d, yyyy h:mm a")
-                    : format(request.submissionDate, "MMM d, yyyy h:mm a")}</TableCell>
+                  <TableCell>
+                    {request.preferredDate} {request.preferredTime}
+                  </TableCell>
+                  <TableCell>
+                    {typeof request.submissionDate === 'string'
+                      ? format(
+                          new Date(request.submissionDate),
+                          'MMM d, yyyy h:mm a'
+                        )
+                      : format(request.submissionDate, 'MMM d, yyyy h:mm a')}
+                  </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(request.status)}>
                       <span className="flex items-center gap-1">
@@ -619,13 +657,22 @@ const MeetingHallContent = () => {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={() => handleViewRequest(request)}>View Details</Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewRequest(request)}
+                    >
+                      View Details
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-10 text-gray-500">
+                <TableCell
+                  colSpan={8}
+                  className="text-center py-10 text-gray-500"
+                >
                   No booking requests found
                 </TableCell>
               </TableRow>
@@ -637,7 +684,7 @@ const MeetingHallContent = () => {
   );
 
   const countNewRequests = () => {
-    return bookingRequests.filter(request => request.isNew).length;
+    return bookingRequests.filter((request) => request.isNew).length;
   };
 
   // Add the handleAddHall function where other handler functions are defined
@@ -645,16 +692,19 @@ const MeetingHallContent = () => {
     try {
       // Format amenities as an array
       const amenitiesArray = newHall.amenities
-        ? newHall.amenities.split(',').map(item => item.trim())
+        ? newHall.amenities.split(',').map((item) => item.trim())
         : [];
 
       const hallData = {
         ...newHall,
         capacity: parseInt(newHall.capacity),
-        amenities: amenitiesArray
+        amenities: amenitiesArray,
       };
 
-      const response = await axios.post(`${API_BASE_URL}/meeting-hall/halls`, hallData);
+      const response = await axios.post(
+        `${API_BASE_URL}/meeting-hall/halls`,
+        hallData
+      );
 
       if (response.data.status === 'success') {
         // Add the new hall to the state
@@ -668,7 +718,7 @@ const MeetingHallContent = () => {
           size: '',
           price: '',
           amenities: '',
-          status: 'Available'
+          status: 'Available',
         });
 
         toast({
@@ -691,24 +741,31 @@ const MeetingHallContent = () => {
     try {
       // Format amenities as an array
       const amenitiesArray = editHall.amenities
-        ? (typeof editHall.amenities === 'string' 
-           ? editHall.amenities.split(',').map(item => item.trim())
-           : editHall.amenities)
+        ? typeof editHall.amenities === 'string'
+          ? editHall.amenities.split(',').map((item) => item.trim())
+          : editHall.amenities
         : [];
 
       const hallData = {
         ...editHall,
         capacity: parseInt(editHall.capacity),
-        amenities: amenitiesArray
+        amenities: amenitiesArray,
       };
 
-      const response = await axios.patch(`${API_BASE_URL}/meeting-hall/halls/${selectedHallForEdit._id}`, hallData);
+      const response = await axios.patch(
+        `${API_BASE_URL}/meeting-hall/halls/${selectedHallForEdit._id}`,
+        hallData
+      );
 
       if (response.data.status === 'success') {
         // Update the hall in the state
-        setHalls(halls.map(hall => 
-          hall._id === selectedHallForEdit._id ? response.data.data.hall : hall
-        ));
+        setHalls(
+          halls.map((hall) =>
+            hall._id === selectedHallForEdit._id
+              ? response.data.data.hall
+              : hall
+          )
+        );
 
         // Close dialog and reset form
         setEditDialogOpen(false);
@@ -719,7 +776,7 @@ const MeetingHallContent = () => {
           size: '',
           price: '',
           amenities: '',
-          status: 'Available'
+          status: 'Available',
         });
 
         toast({
@@ -740,11 +797,15 @@ const MeetingHallContent = () => {
   // Delete hall function
   const handleDeleteHall = async () => {
     try {
-      const response = await axios.delete(`${API_BASE_URL}/meeting-hall/halls/${selectedHallForDelete._id}`);
+      const response = await axios.delete(
+        `${API_BASE_URL}/meeting-hall/halls/${selectedHallForDelete._id}`
+      );
 
       if (response.status === 204 || response.data.status === 'success') {
         // Remove the hall from the state
-        setHalls(halls.filter(hall => hall._id !== selectedHallForDelete._id));
+        setHalls(
+          halls.filter((hall) => hall._id !== selectedHallForDelete._id)
+        );
 
         // Close dialog and reset
         setDeleteDialogOpen(false);
@@ -773,8 +834,10 @@ const MeetingHallContent = () => {
       capacity: hall.capacity.toString(),
       size: hall.size,
       price: hall.price,
-      amenities: Array.isArray(hall.amenities) ? hall.amenities.join(', ') : hall.amenities || '',
-      status: hall.status
+      amenities: Array.isArray(hall.amenities)
+        ? hall.amenities.join(', ')
+        : hall.amenities || '',
+      status: hall.status,
     });
     setEditDialogOpen(true);
   };
@@ -790,7 +853,7 @@ const MeetingHallContent = () => {
     const { name, value } = e.target;
     setEditHall({
       ...editHall,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -799,7 +862,7 @@ const MeetingHallContent = () => {
     const { name, value } = e.target;
     setNewHall({
       ...newHall,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -815,14 +878,20 @@ const MeetingHallContent = () => {
 
   // Get bookings for a specific day
   const getBookingsForDay = (day) => {
-    return bookings.filter(booking => {
+    return bookings.filter((booking) => {
       // Convert string dates to Date objects
-      const startDate = typeof booking.startDate === 'string' ? parseISO(booking.startDate) : booking.startDate;
-      const endDate = typeof booking.endDate === 'string' ? parseISO(booking.endDate) : booking.endDate;
+      const startDate =
+        typeof booking.startDate === 'string'
+          ? parseISO(booking.startDate)
+          : booking.startDate;
+      const endDate =
+        typeof booking.endDate === 'string'
+          ? parseISO(booking.endDate)
+          : booking.endDate;
 
       // Check if the day falls within the booking period
       return (
-        (selectedHall === "all" || booking.hallName === selectedHall) &&
+        (selectedHall === 'all' || booking.hallName === selectedHall) &&
         isWithinInterval(day, { start: startDate, end: endDate })
       );
     });
@@ -831,18 +900,20 @@ const MeetingHallContent = () => {
   // Calculate booking color based on hall name for consistency
   const getBookingColor = (hallName) => {
     const colors = [
-      "bg-blue-200 border-blue-400",
-      "bg-green-200 border-green-400",
-      "bg-yellow-200 border-yellow-400",
-      "bg-purple-200 border-purple-400",
-      "bg-red-200 border-red-400",
-      "bg-indigo-200 border-indigo-400",
-      "bg-pink-200 border-pink-400",
-      "bg-orange-200 border-orange-400"
+      'bg-blue-200 border-blue-400',
+      'bg-green-200 border-green-400',
+      'bg-yellow-200 border-yellow-400',
+      'bg-purple-200 border-purple-400',
+      'bg-red-200 border-red-400',
+      'bg-indigo-200 border-indigo-400',
+      'bg-pink-200 border-pink-400',
+      'bg-orange-200 border-orange-400',
     ];
 
     // Generate a consistent index based on hall name
-    const hallIndex = [...hallName].reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+    const hallIndex =
+      [...hallName].reduce((acc, char) => acc + char.charCodeAt(0), 0) %
+      colors.length;
     return colors[hallIndex];
   };
 
@@ -853,8 +924,8 @@ const MeetingHallContent = () => {
 
   // Get unique hall names for filtering
   const getUniqueHallNames = () => {
-    const hallNames = bookings.map(booking => booking.hallName);
-    return ["all", ...new Set(hallNames)];
+    const hallNames = bookings.map((booking) => booking.hallName);
+    return ['all', ...new Set(hallNames)];
   };
 
   // Render a calendar day with its bookings
@@ -866,14 +937,19 @@ const MeetingHallContent = () => {
     return (
       <div
         key={day.toString()}
-        className={`h-32 p-1 border relative ${!isCurrentMonth ? "bg-gray-50" : ""
-          } ${isToday(day) ? "bg-blue-50" : ""} ${isSelected ? "border-2 border-blue-500" : ""
-          }`}
+        className={`h-32 p-1 border relative ${
+          !isCurrentMonth ? 'bg-gray-50' : ''
+        } ${isToday(day) ? 'bg-blue-50' : ''} ${
+          isSelected ? 'border-2 border-blue-500' : ''
+        }`}
         onClick={() => setSelectedDate(day)}
       >
-        <div className={`text-sm ${!isCurrentMonth ? "text-gray-400" : ""} ${isToday(day) ? "font-bold text-blue-600" : ""
-          }`}>
-          {format(day, "d")}
+        <div
+          className={`text-sm ${!isCurrentMonth ? 'text-gray-400' : ''} ${
+            isToday(day) ? 'font-bold text-blue-600' : ''
+          }`}
+        >
+          {format(day, 'd')}
         </div>
         <div className="mt-1 overflow-y-auto max-h-[80px]">
           {dayBookings.slice(0, 3).map((booking, idx) => (
@@ -883,7 +959,9 @@ const MeetingHallContent = () => {
                 e.stopPropagation();
                 handleBookingClick(booking);
               }}
-              className={`text-xs p-1 my-0.5 rounded truncate cursor-pointer border-l-2 ${getBookingColor(booking.hallName)}`}
+              className={`text-xs p-1 my-0.5 rounded truncate cursor-pointer border-l-2 ${getBookingColor(
+                booking.hallName
+              )}`}
             >
               {booking.client}
             </div>
@@ -903,12 +981,12 @@ const MeetingHallContent = () => {
     const weekStart = startOfWeek(new Date());
     const days = eachDayOfInterval({
       start: weekStart,
-      end: endOfWeek(weekStart)
+      end: endOfWeek(weekStart),
     });
 
-    return days.map(day => (
+    return days.map((day) => (
       <div key={day.toString()} className="font-semibold text-center py-2">
-        {format(day, "EEE")}
+        {format(day, 'EEE')}
       </div>
     ));
   };
@@ -1004,9 +1082,7 @@ const MeetingHallContent = () => {
             <Button variant="outline" onClick={() => setSelectedBooking(null)}>
               Close
             </Button>
-            <Button>
-              Edit Booking
-            </Button>
+            <Button>Edit Booking</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1016,9 +1092,15 @@ const MeetingHallContent = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Meeting Hall Management</h1>
+        <h1 className="text-2xl font-bold text-gray-800">
+          Meeting Hall Management
+        </h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExportData} className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExportData}
+            className="flex items-center gap-2"
+          >
             <Download size={16} />
             <span>Export Data</span>
           </Button>
@@ -1038,7 +1120,10 @@ const MeetingHallContent = () => {
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <label htmlFor="name" className="text-right text-sm font-medium">
+                  <label
+                    htmlFor="name"
+                    className="text-right text-sm font-medium"
+                  >
                     Name
                   </label>
                   <Input
@@ -1051,7 +1136,10 @@ const MeetingHallContent = () => {
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <label htmlFor="capacity" className="text-right text-sm font-medium">
+                  <label
+                    htmlFor="capacity"
+                    className="text-right text-sm font-medium"
+                  >
                     Capacity
                   </label>
                   <Input
@@ -1065,7 +1153,10 @@ const MeetingHallContent = () => {
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <label htmlFor="size" className="text-right text-sm font-medium">
+                  <label
+                    htmlFor="size"
+                    className="text-right text-sm font-medium"
+                  >
                     Size
                   </label>
                   <Input
@@ -1078,7 +1169,10 @@ const MeetingHallContent = () => {
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <label htmlFor="price" className="text-right text-sm font-medium">
+                  <label
+                    htmlFor="price"
+                    className="text-right text-sm font-medium"
+                  >
                     Price
                   </label>
                   <Input
@@ -1091,7 +1185,10 @@ const MeetingHallContent = () => {
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <label htmlFor="amenities" className="text-right text-sm font-medium">
+                  <label
+                    htmlFor="amenities"
+                    className="text-right text-sm font-medium"
+                  >
                     Amenities
                   </label>
                   <Input
@@ -1104,13 +1201,18 @@ const MeetingHallContent = () => {
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <label htmlFor="status" className="text-right text-sm font-medium">
+                  <label
+                    htmlFor="status"
+                    className="text-right text-sm font-medium"
+                  >
                     Status
                   </label>
                   <Select
                     name="status"
                     value={newHall.status}
-                    onValueChange={(value) => setNewHall({ ...newHall, status: value })}
+                    onValueChange={(value) =>
+                      setNewHall({ ...newHall, status: value })
+                    }
                   >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select a status" />
@@ -1133,7 +1235,11 @@ const MeetingHallContent = () => {
         </div>
       </div>
 
-      <Tabs defaultValue={selectedTab} onValueChange={setSelectedTab} className="w-full">
+      <Tabs
+        defaultValue={selectedTab}
+        onValueChange={setSelectedTab}
+        className="w-full"
+      >
         <TabsList className="mb-4">
           <TabsTrigger value="halls">Meeting Halls</TabsTrigger>
           <TabsTrigger value="bookings">Bookings</TabsTrigger>
@@ -1151,7 +1257,10 @@ const MeetingHallContent = () => {
         <TabsContent value="halls" className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center justify-between mb-6">
             <div className="relative w-80">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={18}
+              />
               <Input
                 type="text"
                 placeholder="Search halls..."
@@ -1187,7 +1296,9 @@ const MeetingHallContent = () => {
                   {getFilteredHalls().length > 0 ? (
                     getFilteredHalls().map((hall) => (
                       <TableRow key={hall._id || hall.id}>
-                        <TableCell className="font-medium">{hall.name}</TableCell>
+                        <TableCell className="font-medium">
+                          {hall.name}
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
                             <Users size={14} className="text-gray-500" />
@@ -1198,11 +1309,18 @@ const MeetingHallContent = () => {
                         <TableCell>{hall.price}</TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
-                            {hall.amenities && hall.amenities.slice(0, 2).map((amenity, index) => (
-                              <Badge key={index} variant="outline" className="bg-gray-50">
-                                {amenity}
-                              </Badge>
-                            ))}
+                            {hall.amenities &&
+                              hall.amenities
+                                .slice(0, 2)
+                                .map((amenity, index) => (
+                                  <Badge
+                                    key={index}
+                                    variant="outline"
+                                    className="bg-gray-50"
+                                  >
+                                    {amenity}
+                                  </Badge>
+                                ))}
                             {hall.amenities && hall.amenities.length > 2 && (
                               <Badge variant="outline" className="bg-gray-50">
                                 +{hall.amenities.length - 2} more
@@ -1217,10 +1335,19 @@ const MeetingHallContent = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon" onClick={() => openEditDialog(hall)}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditDialog(hall)}
+                            >
                               <Edit size={16} />
                             </Button>
-                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700" onClick={() => openDeleteDialog(hall)}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-red-500 hover:text-red-700"
+                              onClick={() => openDeleteDialog(hall)}
+                            >
                               <Trash2 size={16} />
                             </Button>
                           </div>
@@ -1229,7 +1356,10 @@ const MeetingHallContent = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-10 text-gray-500">
+                      <TableCell
+                        colSpan={7}
+                        className="text-center py-10 text-gray-500"
+                      >
                         No meeting halls found
                       </TableCell>
                     </TableRow>
@@ -1240,10 +1370,16 @@ const MeetingHallContent = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="bookings" className="bg-white p-6 rounded-lg shadow">
+        <TabsContent
+          value="bookings"
+          className="bg-white p-6 rounded-lg shadow"
+        >
           <div className="flex items-center justify-between mb-6">
             <div className="relative w-80">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={18}
+              />
               <Input
                 type="text"
                 placeholder="Search bookings..."
@@ -1283,7 +1419,9 @@ const MeetingHallContent = () => {
                   {getFilteredBookings().length > 0 ? (
                     getFilteredBookings().map((booking) => (
                       <TableRow key={booking.id || booking._id}>
-                        <TableCell className="font-medium">{booking.id || booking.bookingId}</TableCell>
+                        <TableCell className="font-medium">
+                          {booking.id || booking.bookingId}
+                        </TableCell>
                         <TableCell>{booking.hallName}</TableCell>
                         <TableCell>{booking.client}</TableCell>
                         <TableCell>{booking.eventType}</TableCell>
@@ -1304,13 +1442,18 @@ const MeetingHallContent = () => {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="outline" size="sm">View Details</Button>
+                          <Button variant="outline" size="sm">
+                            View Details
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-10 text-gray-500">
+                      <TableCell
+                        colSpan={8}
+                        className="text-center py-10 text-gray-500"
+                      >
                         No bookings found
                       </TableCell>
                     </TableRow>
@@ -1321,10 +1464,16 @@ const MeetingHallContent = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="requests" className="bg-white p-6 rounded-lg shadow">
+        <TabsContent
+          value="requests"
+          className="bg-white p-6 rounded-lg shadow"
+        >
           <div className="flex items-center justify-between mb-6">
             <div className="relative w-80">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={18}
+              />
               <Input
                 type="text"
                 placeholder="Search booking requests..."
@@ -1334,7 +1483,11 @@ const MeetingHallContent = () => {
               />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleExportData} className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleExportData}
+                className="flex items-center gap-2"
+              >
                 <Download size={16} />
                 <span>Export to Excel</span>
               </Button>
@@ -1343,12 +1496,20 @@ const MeetingHallContent = () => {
 
           {renderRequestsTable()}
 
-          <Dialog open={selectedRequest !== null} onOpenChange={(open) => !open && setSelectedRequest(null)}>
+          <Dialog
+            open={selectedRequest !== null}
+            onOpenChange={(open) => !open && setSelectedRequest(null)}
+          >
             <DialogContent className="max-w-3xl">
               <DialogHeader>
                 <DialogTitle>Booking Request Details</DialogTitle>
                 <DialogDescription>
-                  Request {selectedRequest?.id} submitted on {selectedRequest && format(new Date(selectedRequest.submissionDate), "MMM d, yyyy h:mm a")}
+                  Request {selectedRequest?.id} submitted on{' '}
+                  {selectedRequest &&
+                    format(
+                      new Date(selectedRequest.submissionDate),
+                      'MMM d, yyyy h:mm a'
+                    )}
                 </DialogDescription>
               </DialogHeader>
 
@@ -1362,11 +1523,18 @@ const MeetingHallContent = () => {
                         </h3>
                         <div className="mt-2 space-y-2">
                           <p className="flex items-center gap-2">
-                            <span className="font-medium min-w-32">Full Name:</span>
-                            <span>{selectedRequest.firstName} {selectedRequest.lastName}</span>
+                            <span className="font-medium min-w-32">
+                              Full Name:
+                            </span>
+                            <span>
+                              {selectedRequest.firstName}{' '}
+                              {selectedRequest.lastName}
+                            </span>
                           </p>
                           <p className="flex items-center gap-2">
-                            <span className="font-medium min-w-32">Company:</span>
+                            <span className="font-medium min-w-32">
+                              Company:
+                            </span>
                             <Building2 size={14} className="text-gray-500" />
                             <span>{selectedRequest.companyName}</span>
                           </p>
@@ -1385,16 +1553,24 @@ const MeetingHallContent = () => {
 
                       <div>
                         <h3 className="text-sm font-medium text-gray-500 flex items-center">
-                          <CalendarIcon className="h-4 w-4 mr-1" /> Event Details
+                          <CalendarIcon className="h-4 w-4 mr-1" /> Event
+                          Details
                         </h3>
                         <div className="mt-2 space-y-2">
                           <p className="flex items-center gap-2">
-                            <span className="font-medium min-w-32">Preferred Date:</span>
-                            <CalendarRange size={14} className="text-gray-500" />
+                            <span className="font-medium min-w-32">
+                              Preferred Date:
+                            </span>
+                            <CalendarRange
+                              size={14}
+                              className="text-gray-500"
+                            />
                             <span>{selectedRequest.preferredDate}</span>
                           </p>
                           <p className="flex items-center gap-2">
-                            <span className="font-medium min-w-32">Preferred Time:</span>
+                            <span className="font-medium min-w-32">
+                              Preferred Time:
+                            </span>
                             <Clock size={14} className="text-gray-500" />
                             <span>{selectedRequest.preferredTime}</span>
                           </p>
@@ -1403,7 +1579,9 @@ const MeetingHallContent = () => {
                             <span>{selectedRequest.hallName}</span>
                           </p>
                           <p className="flex items-center gap-2">
-                            <span className="font-medium min-w-32">Attendees:</span>
+                            <span className="font-medium min-w-32">
+                              Attendees:
+                            </span>
                             <Users size={14} className="text-gray-500" />
                             <span>{selectedRequest.attendees}</span>
                           </p>
@@ -1416,19 +1594,30 @@ const MeetingHallContent = () => {
                         <h3 className="text-sm font-medium text-gray-500 flex items-center">
                           <FileText className="h-4 w-4 mr-1" /> Event Purpose
                         </h3>
-                        <p className="mt-2 text-sm">{selectedRequest.purpose}</p>
+                        <p className="mt-2 text-sm">
+                          {selectedRequest.purpose}
+                        </p>
                       </div>
 
                       <div>
                         <h3 className="text-sm font-medium text-gray-500 flex items-center">
-                          <Tag className="h-4 w-4 mr-1" /> Additional Requirements
+                          <Tag className="h-4 w-4 mr-1" /> Additional
+                          Requirements
                         </h3>
-                        <p className="mt-2 text-sm">{selectedRequest.additionalRequirements}</p>
+                        <p className="mt-2 text-sm">
+                          {selectedRequest.additionalRequirements}
+                        </p>
                       </div>
 
                       <div>
-                        <h3 className="text-sm font-medium text-gray-500">Current Status</h3>
-                        <Badge className={`mt-2 ${getStatusColor(selectedRequest.status)}`}>
+                        <h3 className="text-sm font-medium text-gray-500">
+                          Current Status
+                        </h3>
+                        <Badge
+                          className={`mt-2 ${getStatusColor(
+                            selectedRequest.status
+                          )}`}
+                        >
                           <span className="flex items-center gap-1">
                             {getStatusIcon(selectedRequest.status)}
                             {selectedRequest.status}
@@ -1437,16 +1626,22 @@ const MeetingHallContent = () => {
                       </div>
 
                       <div>
-                        <h3 className="text-sm font-medium text-gray-500">Previous Notes</h3>
+                        <h3 className="text-sm font-medium text-gray-500">
+                          Previous Notes
+                        </h3>
                         <p className="mt-2 text-sm">
-                          {selectedRequest.notes ? selectedRequest.notes : "No notes available"}
+                          {selectedRequest.notes
+                            ? selectedRequest.notes
+                            : 'No notes available'}
                         </p>
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-4 mt-6 border-t pt-6">
-                    <h3 className="text-sm font-medium text-gray-500">Update Status</h3>
+                    <h3 className="text-sm font-medium text-gray-500">
+                      Update Status
+                    </h3>
                     <Select value={newStatus} onValueChange={setNewStatus}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select status" />
@@ -1460,7 +1655,9 @@ const MeetingHallContent = () => {
                     </Select>
 
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500">Add Notes</h3>
+                      <h3 className="text-sm font-medium text-gray-500">
+                        Add Notes
+                      </h3>
                       <Textarea
                         placeholder="Add internal notes about this booking request"
                         className="mt-2"
@@ -1482,7 +1679,10 @@ const MeetingHallContent = () => {
           </Dialog>
         </TabsContent>
 
-        <TabsContent value="calendar" className="bg-white p-6 rounded-lg shadow">
+        <TabsContent
+          value="calendar"
+          className="bg-white p-6 rounded-lg shadow"
+        >
           <div className="space-y-6">
             {/* Calendar header with controls */}
             <div className="flex justify-between items-center">
@@ -1523,9 +1723,9 @@ const MeetingHallContent = () => {
                       <SelectValue placeholder="Select hall" />
                     </SelectTrigger>
                     <SelectContent>
-                      {getUniqueHallNames().map(hall => (
+                      {getUniqueHallNames().map((hall) => (
                         <SelectItem key={hall} value={hall}>
-                          {hall === "all" ? "All Halls" : hall}
+                          {hall === 'all' ? 'All Halls' : hall}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1537,8 +1737,8 @@ const MeetingHallContent = () => {
                   onClick={() => {
                     // This could open a booking creation dialog in the future
                     toast({
-                      title: "New Booking",
-                      description: "Create new booking feature coming soon.",
+                      title: 'New Booking',
+                      description: 'Create new booking feature coming soon.',
                     });
                   }}
                 >
@@ -1561,17 +1761,19 @@ const MeetingHallContent = () => {
                 </div>
 
                 {/* Calendar days grid */}
-                <div className="border-t">
-                  {renderDaysGrid()}
-                </div>
+                <div className="border-t">{renderDaysGrid()}</div>
               </div>
             )}
 
             {/* Legend showing hall colors */}
             <div className="flex flex-wrap gap-3 mt-4 text-xs">
-              {halls.map(hall => (
+              {halls.map((hall) => (
                 <div key={hall._id || hall.id} className="flex items-center">
-                  <div className={`w-3 h-3 mr-1 rounded-sm border-l-2 ${getBookingColor(hall.name)}`}></div>
+                  <div
+                    className={`w-3 h-3 mr-1 rounded-sm border-l-2 ${getBookingColor(
+                      hall.name
+                    )}`}
+                  ></div>
                   <span>{hall.name}</span>
                 </div>
               ))}
@@ -1594,7 +1796,10 @@ const MeetingHallContent = () => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-name" className="text-right text-sm font-medium">
+              <label
+                htmlFor="edit-name"
+                className="text-right text-sm font-medium"
+              >
                 Name
               </label>
               <Input
@@ -1607,7 +1812,10 @@ const MeetingHallContent = () => {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-capacity" className="text-right text-sm font-medium">
+              <label
+                htmlFor="edit-capacity"
+                className="text-right text-sm font-medium"
+              >
                 Capacity
               </label>
               <Input
@@ -1621,7 +1829,10 @@ const MeetingHallContent = () => {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-size" className="text-right text-sm font-medium">
+              <label
+                htmlFor="edit-size"
+                className="text-right text-sm font-medium"
+              >
                 Size
               </label>
               <Input
@@ -1634,7 +1845,10 @@ const MeetingHallContent = () => {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-price" className="text-right text-sm font-medium">
+              <label
+                htmlFor="edit-price"
+                className="text-right text-sm font-medium"
+              >
                 Price
               </label>
               <Input
@@ -1647,7 +1861,10 @@ const MeetingHallContent = () => {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-amenities" className="text-right text-sm font-medium">
+              <label
+                htmlFor="edit-amenities"
+                className="text-right text-sm font-medium"
+              >
                 Amenities
               </label>
               <Input
@@ -1660,13 +1877,18 @@ const MeetingHallContent = () => {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="edit-status" className="text-right text-sm font-medium">
+              <label
+                htmlFor="edit-status"
+                className="text-right text-sm font-medium"
+              >
                 Status
               </label>
               <Select
                 name="status"
                 value={editHall.status}
-                onValueChange={(value) => setEditHall({ ...editHall, status: value })}
+                onValueChange={(value) =>
+                  setEditHall({ ...editHall, status: value })
+                }
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Select a status" />
@@ -1683,9 +1905,7 @@ const MeetingHallContent = () => {
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleEditHall}>
-              Save Changes
-            </Button>
+            <Button onClick={handleEditHall}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1696,14 +1916,21 @@ const MeetingHallContent = () => {
           <DialogHeader>
             <DialogTitle>Delete Meeting Hall</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this meeting hall? This action cannot be undone.
+              Are you sure you want to delete this meeting hall? This action
+              cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={handleDeleteHall} className="bg-red-600 text-white hover:bg-red-700">
+            <Button
+              onClick={handleDeleteHall}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
               Delete Hall
             </Button>
           </DialogFooter>
