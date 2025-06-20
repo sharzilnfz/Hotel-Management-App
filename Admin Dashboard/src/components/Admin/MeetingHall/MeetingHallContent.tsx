@@ -289,10 +289,21 @@ const MeetingHallContent = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [selectedHall, setSelectedHall] = useState("all");
-
   // Add state for the dialog near the other state declarations
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedHallForEdit, setSelectedHallForEdit] = useState(null);
+  const [selectedHallForDelete, setSelectedHallForDelete] = useState(null);
   const [newHall, setNewHall] = useState({
+    name: '',
+    capacity: '',
+    size: '',
+    price: '',
+    amenities: '',
+    status: 'Available'
+  });
+  const [editHall, setEditHall] = useState({
     name: '',
     capacity: '',
     size: '',
@@ -673,6 +684,114 @@ const MeetingHallContent = () => {
         variant: 'destructive',
       });
     }
+  };
+
+  // Edit hall function
+  const handleEditHall = async () => {
+    try {
+      // Format amenities as an array
+      const amenitiesArray = editHall.amenities
+        ? (typeof editHall.amenities === 'string' 
+           ? editHall.amenities.split(',').map(item => item.trim())
+           : editHall.amenities)
+        : [];
+
+      const hallData = {
+        ...editHall,
+        capacity: parseInt(editHall.capacity),
+        amenities: amenitiesArray
+      };
+
+      const response = await axios.patch(`${API_BASE_URL}/meeting-hall/halls/${selectedHallForEdit._id}`, hallData);
+
+      if (response.data.status === 'success') {
+        // Update the hall in the state
+        setHalls(halls.map(hall => 
+          hall._id === selectedHallForEdit._id ? response.data.data.hall : hall
+        ));
+
+        // Close dialog and reset form
+        setEditDialogOpen(false);
+        setSelectedHallForEdit(null);
+        setEditHall({
+          name: '',
+          capacity: '',
+          size: '',
+          price: '',
+          amenities: '',
+          status: 'Available'
+        });
+
+        toast({
+          title: 'Success',
+          description: 'Meeting hall updated successfully',
+        });
+      }
+    } catch (error) {
+      console.error('Error updating meeting hall:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update meeting hall. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Delete hall function
+  const handleDeleteHall = async () => {
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/meeting-hall/halls/${selectedHallForDelete._id}`);
+
+      if (response.status === 204 || response.data.status === 'success') {
+        // Remove the hall from the state
+        setHalls(halls.filter(hall => hall._id !== selectedHallForDelete._id));
+
+        // Close dialog and reset
+        setDeleteDialogOpen(false);
+        setSelectedHallForDelete(null);
+
+        toast({
+          title: 'Success',
+          description: 'Meeting hall deleted successfully',
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting meeting hall:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete meeting hall. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Open edit dialog
+  const openEditDialog = (hall) => {
+    setSelectedHallForEdit(hall);
+    setEditHall({
+      name: hall.name,
+      capacity: hall.capacity.toString(),
+      size: hall.size,
+      price: hall.price,
+      amenities: Array.isArray(hall.amenities) ? hall.amenities.join(', ') : hall.amenities || '',
+      status: hall.status
+    });
+    setEditDialogOpen(true);
+  };
+
+  // Open delete dialog
+  const openDeleteDialog = (hall) => {
+    setSelectedHallForDelete(hall);
+    setDeleteDialogOpen(true);
+  };
+
+  // Update the edit input handler for the form
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditHall({
+      ...editHall,
+      [name]: value
+    });
   };
 
   // Update the input handler for the form
@@ -1098,10 +1217,10 @@ const MeetingHallContent = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" onClick={() => openEditDialog(hall)}>
                               <Edit size={16} />
                             </Button>
-                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700">
+                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700" onClick={() => openDeleteDialog(hall)}>
                               <Trash2 size={16} />
                             </Button>
                           </div>
@@ -1463,6 +1582,133 @@ const MeetingHallContent = () => {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Edit Meeting Hall Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[525px]">
+          <DialogHeader>
+            <DialogTitle>Edit Meeting Hall</DialogTitle>
+            <DialogDescription>
+              Update the details of the meeting hall.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-name" className="text-right text-sm font-medium">
+                Name
+              </label>
+              <Input
+                id="edit-name"
+                name="name"
+                value={editHall.name}
+                onChange={handleEditInputChange}
+                className="col-span-3"
+                placeholder="Grand Ballroom"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-capacity" className="text-right text-sm font-medium">
+                Capacity
+              </label>
+              <Input
+                id="edit-capacity"
+                name="capacity"
+                type="number"
+                value={editHall.capacity}
+                onChange={handleEditInputChange}
+                className="col-span-3"
+                placeholder="100"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-size" className="text-right text-sm font-medium">
+                Size
+              </label>
+              <Input
+                id="edit-size"
+                name="size"
+                value={editHall.size}
+                onChange={handleEditInputChange}
+                className="col-span-3"
+                placeholder="1200 sq ft"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-price" className="text-right text-sm font-medium">
+                Price
+              </label>
+              <Input
+                id="edit-price"
+                name="price"
+                value={editHall.price}
+                onChange={handleEditInputChange}
+                className="col-span-3"
+                placeholder="$1,000/day"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-amenities" className="text-right text-sm font-medium">
+                Amenities
+              </label>
+              <Input
+                id="edit-amenities"
+                name="amenities"
+                value={editHall.amenities}
+                onChange={handleEditInputChange}
+                className="col-span-3"
+                placeholder="AV Equipment, WiFi, Catering (comma separated)"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="edit-status" className="text-right text-sm font-medium">
+                Status
+              </label>
+              <Select
+                name="status"
+                value={editHall.status}
+                onValueChange={(value) => setEditHall({ ...editHall, status: value })}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select a status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Available">Available</SelectItem>
+                  <SelectItem value="Booked">Booked</SelectItem>
+                  <SelectItem value="Maintenance">Maintenance</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditHall}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Meeting Hall Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Delete Meeting Hall</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this meeting hall? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleDeleteHall} className="bg-red-600 text-white hover:bg-red-700">
+              Delete Hall
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
