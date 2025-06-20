@@ -1,9 +1,14 @@
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Form,
   FormControl,
@@ -12,42 +17,34 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-import { CheckCircle2, Upload } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import axios from "axios";
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/use-toast';
+import { zodResolver } from '@hookform/resolvers/zod';
+import axios from 'axios';
+import { CheckCircle2, Upload } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
 const formSchema = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().min(7, "Phone number must be at least 7 characters"),
-  bio: z.string().min(20, "Bio must be at least 20 characters"),
-  nationality: z.string().min(2, "Nationality must be at least 2 characters"),
+  firstName: z.string().min(2, 'First name must be at least 2 characters'),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().min(7, 'Phone number must be at least 7 characters'),
+  bio: z.string().min(20, 'Bio must be at least 20 characters'),
+  nationality: z.string().min(2, 'Nationality must be at least 2 characters'),
   experienceYears: z.string().optional(),
-  status: z.string().default("active"),
-  languages: z.string().min(2, "Please enter at least one language"),
+  status: z.string().default('active'),
+  languages: z.string().min(2, 'Please enter at least one language'),
   photo: z.any().optional(),
 });
 
@@ -64,28 +61,28 @@ const AddSpecialistForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [selectedSpecializations, setSelectedSpecializations] = useState<Category[]>([]);
+  const [selectedSpecializations, setSelectedSpecializations] = useState<
+    Category[]
+  >([]);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [imageUrl, setImageUrl] = useState<string>("");
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      bio: "",
-      nationality: "",
-      experienceYears: "",
-      status: "active",
-      languages: "",
-      photo: "",
-    }
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      bio: '',
+      nationality: '',
+      experienceYears: '',
+      status: 'active',
+      languages: '',
+      photo: '',
+    },
   });
 
   // Fetch categories from the API
@@ -93,22 +90,24 @@ const AddSpecialistForm = () => {
     const fetchCategories = async () => {
       setIsLoadingCategories(true);
       try {
-        const response = await axios.get("http://localhost:4000/api/categories");
+        const response = await axios.get(
+          'http://localhost:4000/api/categories'
+        );
         if (response.data.success) {
           setAllCategories(response.data.data);
         } else {
           toast({
-            title: "Error",
-            description: "Failed to fetch categories",
-            variant: "destructive",
+            title: 'Error',
+            description: 'Failed to fetch categories',
+            variant: 'destructive',
           });
         }
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        console.error('Error fetching categories:', error);
         toast({
-          title: "Error",
-          description: "Failed to fetch categories",
-          variant: "destructive",
+          title: 'Error',
+          description: 'Failed to fetch categories',
+          variant: 'destructive',
         });
       } finally {
         setIsLoadingCategories(false);
@@ -117,13 +116,11 @@ const AddSpecialistForm = () => {
 
     fetchCategories();
   }, [toast]);
-
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setSelectedFile(file);
-    setIsUploadingImage(true);
 
     // Create preview
     const reader = new FileReader();
@@ -131,52 +128,13 @@ const AddSpecialistForm = () => {
       setPhotoPreview(reader.result as string);
     };
     reader.readAsDataURL(file);
-
-    try {
-      // Upload image to server immediately
-      const formData = new FormData();
-      formData.append('image', file);
-
-      const uploadResult = await axios.post(
-        'http://localhost:4000/api/content/upload-image',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        }
-      );
-
-      if (uploadResult.data.success) {
-        setImageUrl(uploadResult.data.data.url);
-        toast({
-          title: "Image Uploaded",
-          description: "Profile image uploaded successfully.",
-        });
-      } else {
-        throw new Error("Failed to upload image");
-      }
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      toast({
-        title: "Upload Error",
-        description: "Failed to upload image. Please try again.",
-        variant: "destructive",
-      });
-      // Reset image states on error
-      setPhotoPreview(null);
-      setSelectedFile(null);
-      setImageUrl("");
-    } finally {
-      setIsUploadingImage(false);
-    }
   };
 
   const toggleSpecialization = (category: Category) => {
     setSelectedSpecializations((prev) => {
-      const exists = prev.some(item => item._id === category._id);
+      const exists = prev.some((item) => item._id === category._id);
       if (exists) {
-        return prev.filter(item => item._id !== category._id);
+        return prev.filter((item) => item._id !== category._id);
       } else {
         return [...prev, category];
       }
@@ -195,52 +153,51 @@ const AddSpecialistForm = () => {
         if (value !== null && value !== undefined && key !== 'photo') {
           formData.append(key, String(value));
         }
-      });
+      }); // Add specializations
+      formData.append(
+        'specializations',
+        JSON.stringify(selectedSpecializations)
+      );
 
-      // Add specializations
-      formData.append("specializations", JSON.stringify(selectedSpecializations));
-
-      // Add image URL instead of file
-      if (imageUrl) {
-        formData.append("photo", imageUrl);
+      // Add image file if selected
+      if (selectedFile) {
+        formData.append('photo', selectedFile);
       }
 
       // Send request to backend API
       const response = await axios.post(
-        "http://localhost:4000/api/specialists",
+        'http://localhost:4000/api/specialists',
         formData,
         {
           headers: {
-            "Content-Type": "multipart/form-data"
-          }
+            'Content-Type': 'multipart/form-data',
+          },
         }
       );
 
       if (response.data.success) {
         setIsSuccess(true);
         toast({
-          title: "Specialist Added",
+          title: 'Specialist Added',
           description: `${data.firstName} ${data.lastName} has been added successfully.`,
-        });
-
-        // Reset form after 2 seconds
+        }); // Reset form after 2 seconds
         setTimeout(() => {
           form.reset();
           setPhotoPreview(null);
           setSelectedFile(null);
-          setImageUrl("");
           setSelectedSpecializations([]);
           setIsSuccess(false);
         }, 2000);
       } else {
-        throw new Error(response.data.message || "Failed to add specialist");
+        throw new Error(response.data.message || 'Failed to add specialist');
       }
     } catch (error) {
-      console.error("Error adding specialist:", error);
+      console.error('Error adding specialist:', error);
       toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to add specialist",
-        variant: "destructive",
+        title: 'Error',
+        description:
+          error.response?.data?.message || 'Failed to add specialist',
+        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
@@ -253,8 +210,12 @@ const AddSpecialistForm = () => {
         {isSuccess ? (
           <div className="flex flex-col items-center justify-center py-12">
             <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
-            <h3 className="text-xl font-medium text-gray-900">Specialist Added Successfully</h3>
-            <p className="text-gray-500 mt-2">The new specialist has been added to the system.</p>
+            <h3 className="text-xl font-medium text-gray-900">
+              Specialist Added Successfully
+            </h3>
+            <p className="text-gray-500 mt-2">
+              The new specialist has been added to the system.
+            </p>
             <Button className="mt-6" onClick={() => setIsSuccess(false)}>
               Add Another Specialist
             </Button>
@@ -276,11 +237,6 @@ const AddSpecialistForm = () => {
                         <Upload size={32} />
                       </div>
                     )}
-                    {isUploadingImage && (
-                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      </div>
-                    )}
                   </div>
                   <Input
                     id="photo"
@@ -288,16 +244,14 @@ const AddSpecialistForm = () => {
                     accept="image/*"
                     className="hidden"
                     onChange={handlePhotoChange}
-                    disabled={isUploadingImage}
                   />
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => document.getElementById("photo")?.click()}
+                    onClick={() => document.getElementById('photo')?.click()}
                     className="text-sm"
-                    disabled={isUploadingImage}
                   >
-                    {isUploadingImage ? "Uploading..." : "Upload Photo"}
+                    Upload Photo
                   </Button>
                 </div>
               </div>
@@ -338,7 +292,11 @@ const AddSpecialistForm = () => {
                     <FormItem>
                       <FormLabel>Email Address*</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="Enter email address" {...field} />
+                        <Input
+                          type="email"
+                          placeholder="Enter email address"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -380,7 +338,10 @@ const AddSpecialistForm = () => {
                     <FormItem>
                       <FormLabel>Languages Spoken*</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. English, Spanish, French" {...field} />
+                        <Input
+                          placeholder="e.g. English, Spanish, French"
+                          {...field}
+                        />
                       </FormControl>
                       <FormDescription>
                         Separate multiple languages with commas
@@ -397,7 +358,11 @@ const AddSpecialistForm = () => {
                     <FormItem>
                       <FormLabel>Years of Experience</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="Enter years of experience" {...field} />
+                        <Input
+                          type="number"
+                          placeholder="Enter years of experience"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -410,7 +375,10 @@ const AddSpecialistForm = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status*</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select status" />
@@ -428,13 +396,18 @@ const AddSpecialistForm = () => {
 
                 <div className="col-span-1 md:col-span-2">
                   <div className="mb-6">
-                    <FormLabel className="block mb-2">Specializations*</FormLabel>
+                    <FormLabel className="block mb-2">
+                      Specializations*
+                    </FormLabel>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start">
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                        >
                           <span className="truncate">
                             {selectedSpecializations.length === 0
-                              ? "Select specializations"
+                              ? 'Select specializations'
                               : `${selectedSpecializations.length} selected`}
                           </span>
                         </Button>
@@ -443,27 +416,39 @@ const AddSpecialistForm = () => {
                         <DropdownMenuLabel>Categories</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {isLoadingCategories ? (
-                          <div className="px-2 py-1.5 text-sm">Loading categories...</div>
+                          <div className="px-2 py-1.5 text-sm">
+                            Loading categories...
+                          </div>
                         ) : allCategories.length > 0 ? (
                           allCategories.map((category) => (
                             <DropdownMenuCheckboxItem
                               key={category._id}
-                              checked={selectedSpecializations.some(item => item._id === category._id)}
-                              onCheckedChange={() => toggleSpecialization(category)}
+                              checked={selectedSpecializations.some(
+                                (item) => item._id === category._id
+                              )}
+                              onCheckedChange={() =>
+                                toggleSpecialization(category)
+                              }
                             >
                               {category.name}
                             </DropdownMenuCheckboxItem>
                           ))
                         ) : (
-                          <div className="px-2 py-1.5 text-sm">No categories available</div>
+                          <div className="px-2 py-1.5 text-sm">
+                            No categories available
+                          </div>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>
 
                     {selectedSpecializations.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
-                        {selectedSpecializations.map(spec => (
-                          <Badge key={spec._id} variant="secondary" className="p-1">
+                        {selectedSpecializations.map((spec) => (
+                          <Badge
+                            key={spec._id}
+                            variant="secondary"
+                            className="p-1"
+                          >
                             {spec.name}
                           </Badge>
                         ))}
@@ -491,7 +476,8 @@ const AddSpecialistForm = () => {
                           />
                         </FormControl>
                         <FormDescription>
-                          Provide details about specialist's background, certifications and expertise.
+                          Provide details about specialist's background,
+                          certifications and expertise.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -506,9 +492,11 @@ const AddSpecialistForm = () => {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isSubmitting || selectedSpecializations.length === 0}
+                  disabled={
+                    isSubmitting || selectedSpecializations.length === 0
+                  }
                 >
-                  {isSubmitting ? "Adding..." : "Add Specialist"}
+                  {isSubmitting ? 'Adding...' : 'Add Specialist'}
                 </Button>
               </div>
             </form>
