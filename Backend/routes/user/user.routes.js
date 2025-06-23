@@ -1,16 +1,17 @@
+//backend routes:
 import express from 'express';
 import {
-    checkUser,
-    getAllUsers,
-    getAllGuests,
-    getAllStaffUsers,
-    getSingleUser,
-    loginUser,
-    signupUser,
-    updateUser,
-    deleteUser,
-    updateUserStatus,
-    updateLoyaltyPoints
+  checkUser,
+  deleteUser,
+  getAllGuests,
+  getAllStaffUsers,
+  getAllUsers,
+  getSingleUser,
+  loginUser,
+  signupUser,
+  updateLoyaltyPoints,
+  updateUser,
+  updateUserStatus,
 } from '../../controllers/users/user.controller.js';
 
 const router = express.Router();

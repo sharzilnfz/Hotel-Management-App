@@ -263,6 +263,7 @@ const SignUp = () => {
                         className={errors.phone ? 'error' : ''}
                       />
                     </div>
+
                     {errors.phone && (
                       <span className="error-message">{errors.phone}</span>
                     )}

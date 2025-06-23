@@ -1,37 +1,73 @@
-
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Mail, Lock, AlertCircle } from "lucide-react";
-import { motion } from "framer-motion";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
+//login.tsx:
+import { useAuth } from '@/contexts/AuthContext';
+import { motion } from 'framer-motion';
+import { AlertCircle, ArrowLeft, Lock, Mail } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login, socialLogin, isLoading } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  // Email validation helper
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    
+    setError('');
+
+    // Frontend validation
+    if (!email || !password) {
+      setError('Please fill in all fields.');
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
     try {
       await login(email, password);
-      toast.success("Successfully logged in!");
-      navigate("/");
-    } catch (err) {
-      setError("Invalid email or password. Please try again.");
-      toast.error("Login failed. Please check your credentials.");
+      toast.success('Successfully logged in!');
+      navigate('/');
+    } catch (err: any) {
+      // Handle different types of errors
+      let errorMessage = 'Login failed. Please try again.';
+
+      if (err.message) {
+        // Check for specific error messages from backend
+        if (
+          err.message.includes('Invalid credentials') ||
+          err.message.includes('401')
+        ) {
+          errorMessage =
+            'Invalid email or password. Please check your credentials.';
+        } else if (err.message.includes('User not found')) {
+          errorMessage = 'No account found with this email address.';
+        } else if (err.message.includes('Network')) {
+          errorMessage = 'Network error. Please check your connection.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
-
-  const handleSocialLogin = async (provider: "google" | "apple") => {
+  const handleSocialLogin = async (provider: 'google' | 'apple') => {
     try {
       await socialLogin(provider);
       toast.success(`Successfully logged in with ${provider}!`);
-      navigate("/");
+      navigate('/');
     } catch (err) {
       setError(`Could not sign in with ${provider}. Please try again.`);
       toast.error(`${provider} login failed.`);
@@ -47,7 +83,9 @@ const Login = () => {
         >
           <ArrowLeft size={24} />
         </button>
-        <h1 className="text-2xl font-playfair text-center flex-1 mr-8">Sign In</h1>
+        <h1 className="text-2xl font-playfair text-center flex-1 mr-8">
+          Sign In
+        </h1>
       </div>
 
       <motion.div
@@ -100,7 +138,10 @@ const Login = () => {
                 <label className="block text-sm font-medium text-gray-700">
                   Password
                 </label>
-                <Link to="/auth/forgot-password" className="text-xs text-hotel-burgundy font-medium">
+                <Link
+                  to="/auth/forgot-password"
+                  className="text-xs text-hotel-burgundy font-medium"
+                >
                   Forgot Password?
                 </Link>
               </div>
@@ -124,7 +165,7 @@ const Login = () => {
               disabled={isLoading}
               className="w-full bg-hotel-burgundy text-white py-3 rounded-lg font-medium flex items-center justify-center"
             >
-              {isLoading ? "Signing in..." : "Sign In"}
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
@@ -142,7 +183,7 @@ const Login = () => {
 
             <div className="mt-4 grid grid-cols-2 gap-4">
               <button
-                onClick={() => handleSocialLogin("google")}
+                onClick={() => handleSocialLogin('google')}
                 className="py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
               >
                 <img
@@ -153,13 +194,13 @@ const Login = () => {
                 <span>Google</span>
               </button>
               <button
-                onClick={() => handleSocialLogin("apple")}
+                onClick={() => handleSocialLogin('apple')}
                 className="py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
               >
                 <img
-                  src="https://www.svgrepo.com/show/494552/apple.svg"
+                  src="https://www.svgrepo.com/show/508761/apple.svg"
                   alt="Apple"
-                  className="w-5 h-5"
+                  className="w-5 h-5 "
                 />
                 <span>Apple</span>
               </button>
@@ -168,8 +209,11 @@ const Login = () => {
 
           <div className="text-center mt-8">
             <p className="text-gray-600">
-              Don't have an account?{" "}
-              <Link to="/auth/register" className="text-hotel-burgundy font-medium">
+              Don't have an account?{' '}
+              <Link
+                to="/auth/register"
+                className="text-hotel-burgundy font-medium"
+              >
                 Sign Up
               </Link>
             </p>
