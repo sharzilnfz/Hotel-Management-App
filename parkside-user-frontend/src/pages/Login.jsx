@@ -58,7 +58,7 @@ const Login = () => {
     // Simulate API call
     try {
       const payload = {
-        email: formData.email,
+        userName: formData.email, // Backend expects userName (which is the email)
         password: formData.password,
       };
 
@@ -72,6 +72,12 @@ const Login = () => {
           message: 'Login successful! Redirecting...',
           type: 'success',
         });
+        console.log('Login response:', response.data);
+
+        // Redirect to dashboard or home page after 1 second
+        setTimeout(() => {
+          window.location.href = '/'; // or '/dashboard' if you have one
+        }, 1000);
       } else {
         setFeedback({
           message: response.data.message || 'Login failed. Please try again.',
@@ -79,10 +85,23 @@ const Login = () => {
         });
       }
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.error || 'Login failed. Please try again.';
-      setFeedback({ message: errorMessage, type: 'error' });
       console.error('Login error:', error);
+
+      let errorMessage = 'Login failed. Please try again.';
+
+      if (error.response?.data?.error) {
+        // Use the specific error message from backend
+        errorMessage = error.response.data.error;
+      } else if (error.response?.status === 400) {
+        errorMessage =
+          'Invalid email or password. Please check your credentials.';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Invalid email or password.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      setFeedback({ message: errorMessage, type: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -114,6 +133,13 @@ const Login = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="auth-form">
+                  {/* Feedback message */}
+                  {feedback.message && (
+                    <div className={`feedback ${feedback.type}`}>
+                      {feedback.message}
+                    </div>
+                  )}
+
                   <div className="input-group">
                     <label htmlFor="email">Email Address</label>
                     <div className="input-wrapper">
@@ -527,19 +553,26 @@ const Login = () => {
             min-height: 70vh;
             padding: 40px 0;
           }
+
           .feedback {
             margin-bottom: 1rem;
-            padding: 0.5rem;
+            padding: 0.75rem;
             border-radius: 4px;
             text-align: center;
+            font-family: var(--secondary-font);
+            font-weight: 500;
           }
+
           .feedback.success {
             background-color: #d4edda;
             color: #155724;
+            border: 1px solid #c3e6cb;
           }
+
           .feedback.error {
             background-color: #f8d7da;
             color: #721c24;
+            border: 1px solid #f5c6cb;
           }
         }
       `}</style>
