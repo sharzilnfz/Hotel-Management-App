@@ -4,7 +4,6 @@ import { MobileLayout } from "@/components/ui/mobile-layout";
 import { Calendar, Award, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
 
 const BookingsList = () => {
   const { isAuthenticated } = useAuth();
@@ -25,9 +24,9 @@ const BookingsList = () => {
                 Discover our luxury accommodations and book your perfect getaway
               </p>
               <Link to="/rooms">
-                <Button className="py-4 px-8">
+                <button className="bg-luxury-gradient text-white py-4 px-8 rounded-2xl font-semibold font-montserrat shadow-luxury hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 border border-hotel-burgundy/20">
                   Explore Suites
-                </Button>
+                </button>
               </Link>
             </div>
           </div>
@@ -44,9 +43,9 @@ const BookingsList = () => {
                 Join our elite community to access luxury reservations and earn exclusive rewards
               </p>
               <Link to="/auth/login">
-                <Button className="py-4 px-8">
+                <button className="bg-luxury-gradient text-white py-4 px-8 rounded-2xl font-semibold font-montserrat shadow-luxury hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 border border-hotel-burgundy/20">
                   Become a Member
-                </Button>
+                </button>
               </Link>
             </div>
           </div>

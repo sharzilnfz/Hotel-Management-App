@@ -1,20 +1,22 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CreditCard, Plus, Trash2 } from 'lucide-react';
+
 export const PaymentMethods = () => {
-  const [savedMethods, setSavedMethods] = useState([{
-    id: 1,
-    type: 'visa',
-    last4: '4242',
-    expiryDate: '12/24'
-  }]);
+  const [savedMethods, setSavedMethods] = useState([
+    { id: 1, type: 'visa', last4: '4242', expiryDate: '12/24' },
+  ]);
+
   const handleDelete = (id: number) => {
     setSavedMethods(methods => methods.filter(method => method.id !== id));
   };
-  return <div className="space-y-4">
+
+  return (
+    <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold text-hotel-sand-dark text-base text-left mx-[3px] my-0 py-0">Saved Payment Methods</h3>
+        <h3 className="text-lg font-semibold">Saved Payment Methods</h3>
         <Button variant="outline" size="sm">
           <Plus size={16} className="mr-2" />
           Add New
@@ -22,7 +24,8 @@ export const PaymentMethods = () => {
       </div>
 
       <div className="space-y-3">
-        {savedMethods.map(method => <Card key={method.id} className="p-4">
+        {savedMethods.map(method => (
+          <Card key={method.id} className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <CreditCard className="h-6 w-6 text-hotel-burgundy" />
@@ -31,11 +34,17 @@ export const PaymentMethods = () => {
                   <p className="text-sm text-gray-500">Expires {method.expiryDate}</p>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => handleDelete(method.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleDelete(method.id)}
+                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+              >
                 <Trash2 size={16} />
               </Button>
             </div>
-          </Card>)}
+          </Card>
+        ))}
       </div>
 
       <div className="mt-6">
@@ -49,5 +58,6 @@ export const PaymentMethods = () => {
           </Button>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };

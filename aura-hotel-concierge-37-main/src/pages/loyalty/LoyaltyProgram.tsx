@@ -1,13 +1,12 @@
+
 import React from "react";
 import { MobileLayout } from "@/components/ui/mobile-layout";
 import { Award, Gift, Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 
 const LoyaltyProgram = () => {
   const { isAuthenticated, user } = useAuth();
-  const { toast } = useToast();
 
   const loyaltyTiers = [
     {
@@ -26,52 +25,6 @@ const LoyaltyProgram = () => {
       benefits: ["Gold benefits", "Spa credit", "Free breakfast"]
     }
   ];
-
-  const rewards = [
-    {
-      id: "free-night",
-      title: "Free Night Stay",
-      description: "Valid for standard rooms",
-      points: 25000
-    },
-    {
-      id: "spa-credit",
-      title: "Spa Credit $50",
-      description: "Valid for any spa service",
-      points: 10000
-    },
-    {
-      id: "restaurant-voucher",
-      title: "Restaurant Voucher",
-      description: "$25 off your next meal",
-      points: 5000
-    }
-  ];
-
-  const handleRewardRedeem = (reward: typeof rewards[0]) => {
-    if (!user) {
-      toast({
-        title: "Please sign in",
-        description: "You need to be signed in to redeem rewards",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (user.loyaltyPoints < reward.points) {
-      toast({
-        title: "Insufficient points",
-        description: `You need ${reward.points} points to redeem this reward. You currently have ${user.loyaltyPoints} points.`,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    toast({
-      title: "Reward redeemed!",
-      description: `${reward.title} has been added to your account. Check your email for details.`,
-    });
-  };
 
   return (
     <MobileLayout title="Loyalty Program" showBackButton>
@@ -115,25 +68,33 @@ const LoyaltyProgram = () => {
                 Available Rewards
               </h3>
               <div className="space-y-3">
-                {rewards.map((reward) => (
-                  <div key={reward.id} className="border border-gray-100 rounded-lg p-3 flex justify-between items-center">
-                    <div>
-                      <h4 className="font-medium">{reward.title}</h4>
-                      <p className="text-sm text-gray-600">{reward.description}</p>
-                    </div>
-                    <button 
-                      onClick={() => handleRewardRedeem(reward)}
-                      disabled={user.loyaltyPoints < reward.points}
-                      className={`text-white text-sm px-3 py-1 rounded transition-colors ${
-                        user.loyaltyPoints >= reward.points 
-                          ? 'bg-hotel-burgundy hover:bg-hotel-burgundy/90' 
-                          : 'bg-gray-400 cursor-not-allowed'
-                      }`}
-                    >
-                      {reward.points.toLocaleString()} pts
-                    </button>
+                <div className="border border-gray-100 rounded-lg p-3 flex justify-between items-center">
+                  <div>
+                    <h4 className="font-medium">Free Night Stay</h4>
+                    <p className="text-sm text-gray-600">Valid for standard rooms</p>
                   </div>
-                ))}
+                  <button className="bg-hotel-burgundy text-white text-sm px-3 py-1 rounded">
+                    25,000 pts
+                  </button>
+                </div>
+                <div className="border border-gray-100 rounded-lg p-3 flex justify-between items-center">
+                  <div>
+                    <h4 className="font-medium">Spa Credit $50</h4>
+                    <p className="text-sm text-gray-600">Valid for any spa service</p>
+                  </div>
+                  <button className="bg-hotel-burgundy text-white text-sm px-3 py-1 rounded">
+                    10,000 pts
+                  </button>
+                </div>
+                <div className="border border-gray-100 rounded-lg p-3 flex justify-between items-center">
+                  <div>
+                    <h4 className="font-medium">Restaurant Voucher</h4>
+                    <p className="text-sm text-gray-600">$25 off your next meal</p>
+                  </div>
+                  <button className="bg-hotel-burgundy text-white text-sm px-3 py-1 rounded">
+                    5,000 pts
+                  </button>
+                </div>
               </div>
             </div>
             

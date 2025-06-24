@@ -1,6 +1,8 @@
+
 import React from "react";
 import { motion } from "framer-motion";
 import { Bath, Users, Wifi, Coffee } from "lucide-react";
+
 interface RoomCardProps {
   id: string;
   name: string;
@@ -12,6 +14,7 @@ interface RoomCardProps {
   capacity: number;
   onClick?: () => void;
 }
+
 export function RoomCard({
   id,
   name,
@@ -21,13 +24,20 @@ export function RoomCard({
   image,
   amenities,
   capacity,
-  onClick
+  onClick,
 }: RoomCardProps) {
-  return <motion.div whileHover={{
-    y: -5
-  }} className="overflow-hidden rounded-xl bg-white shadow-md border border-gray-100 hover:border-hotel-gold/50 transition-all" onClick={onClick}>
+  return (
+    <motion.div
+      whileHover={{ y: -5 }}
+      className="overflow-hidden rounded-xl bg-white shadow-md border border-gray-100 hover:border-hotel-gold/50 transition-all"
+      onClick={onClick}
+    >
       <div className="relative h-48 overflow-hidden">
-        <img src={image} alt={name} className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+        <img 
+          src={image} 
+          alt={name}
+          className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" 
+        />
       </div>
       <div className="p-4">
         <div className="flex justify-between items-start">
@@ -42,26 +52,36 @@ export function RoomCard({
         
         <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
           <div className="flex items-center gap-1">
-            <Users size={16} className="text-hotel-sand-dark" />
+            <Users size={16} className="text-hotel-burgundy" />
             <span>{capacity}</span>
           </div>
-          {amenities.includes("wifi") && <div className="flex items-center gap-1">
-              <Wifi size={16} className="text-hotel-sand-dark" />
-            </div>}
-          {amenities.includes("bathroom") && <div className="flex items-center gap-1">
-              <Bath size={16} className="text-hotel-sand-dark" />
-            </div>}
-          {amenities.includes("breakfast") && <div className="flex items-center gap-1">
-              <Coffee size={16} className="text-hotel-sand-dark" />
-            </div>}
+          {amenities.includes("wifi") && (
+            <div className="flex items-center gap-1">
+              <Wifi size={16} className="text-hotel-burgundy" />
+            </div>
+          )}
+          {amenities.includes("bathroom") && (
+            <div className="flex items-center gap-1">
+              <Bath size={16} className="text-hotel-burgundy" />
+            </div>
+          )}
+          {amenities.includes("breakfast") && (
+            <div className="flex items-center gap-1">
+              <Coffee size={16} className="text-hotel-burgundy" />
+            </div>
+          )}
         </div>
         
-        <button onClick={e => {
-        e.stopPropagation();
-        onClick && onClick();
-      }} className="w-full py-2 rounded-md hover:bg-opacity-90 transition-colors text-hotel-sand text-[hotel-sand-dark] font-bold bg-hotel-burgundy-dark bg-red-900 hover:bg-red-800">
+        <button 
+          className="w-full py-2 bg-hotel-burgundy text-white rounded-md hover:bg-opacity-90 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick && onClick();
+          }}
+        >
           Book Now
         </button>
       </div>
-    </motion.div>;
+    </motion.div>
+  );
 }

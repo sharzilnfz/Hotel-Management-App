@@ -4,34 +4,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Clock } from "lucide-react";
 
 interface ServiceCardProps {
-  id: number;
-  name: string;
+  title: string;
   description: string;
-  basePrice: number;
-  durations: { minutes: number; price: number; }[];
-  image: string;
-  specialists: string[];
+  durations: string;
+  fromPrice: number;
   onSelect?: () => void;
 }
 
-export function ServiceCard({ id, name, description, basePrice, durations, onSelect }: ServiceCardProps) {
-  const formatDurations = () => {
-    return durations.map(d => `${d.minutes}min`).join(', ');
-  };
-
+export function ServiceCard({ title, description, durations, fromPrice, onSelect }: ServiceCardProps) {
   return (
-    <Card 
-      className="group cursor-pointer overflow-hidden border-2 border-hotel-beige/30 hover:border-hotel-gold/50 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-luxury"
-      onClick={onSelect}
-    >
+    <Card className="group cursor-pointer overflow-hidden border-2 border-hotel-beige/30 hover:border-hotel-gold/50 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-luxury">
       <CardContent className="p-6">
         <div className="flex justify-between items-start mb-4">
           <h3 className="font-playfair text-xl font-bold text-hotel-burgundy group-hover:text-hotel-burgundy-dark transition-colors">
-            {name}
+            {title}
           </h3>
           <div className="text-right">
             <div className="text-sm font-montserrat font-medium text-hotel-charcoal/70 mb-1">From</div>
-            <div className="text-2xl font-bold text-hotel-burgundy">${Math.min(...durations.map(d => d.price))}</div>
+            <div className="text-2xl font-bold text-hotel-burgundy">${fromPrice}</div>
           </div>
         </div>
         
@@ -41,7 +31,7 @@ export function ServiceCard({ id, name, description, basePrice, durations, onSel
         
         <div className="flex items-center text-hotel-charcoal/60 font-montserrat text-sm">
           <Clock size={16} className="mr-2 text-hotel-gold" />
-          <span>{formatDurations()}</span>
+          <span>{durations}</span>
         </div>
         
         {/* Shimmer effect on hover */}

@@ -43,7 +43,7 @@ const mockUser: User = {
   name: "John Doe",
   email: "john.doe@example.com",
   phone: "+1 (555) 123-4567",
-  loyaltyPoints: 6000,
+  loyaltyPoints: 750,
   tier: "gold",
   profileImage: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=250&h=250&fit=crop&crop=faces&q=80",
   language: "en",
@@ -94,11 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 <<<<<<< HEAD
     const storedUser = localStorage.getItem("parkside_user");
     if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      // Update stored user with latest mock data (including new points)
-      const updatedUser = { ...parsedUser, loyaltyPoints: 6000 };
-      setUser(updatedUser);
-      localStorage.setItem("parkside_user", JSON.stringify(updatedUser));
+      setUser(JSON.parse(storedUser));
     }
     
     // Simulate loading delay
