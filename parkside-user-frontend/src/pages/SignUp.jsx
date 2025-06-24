@@ -1,3 +1,4 @@
+import axios from 'axios'; // NEW: Import axios for API calls
 import { useContext, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ContentContext } from '../contexts/ContentContext';
@@ -15,6 +16,7 @@ const SignUp = () => {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [feedback, setFeedback] = useState({ message: '', type: '' }); // State for success/error feedback
 
   // Get content from ContentContext
   const contentContext = useContext(ContentContext);
@@ -85,14 +87,66 @@ const SignUp = () => {
     if (!validateForm()) return;
 
     setIsLoading(true);
+    setFeedback({ message: '', type: '' }); // NEW: Clear previous feedback
 
-    // Simulate API call
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log('Sign up attempted:', formData);
-      // Handle successful sign up here
+      //  Map form data to backend expected fields
+      const payload = {
+        fullName: `${formData.firstName} ${formData.lastName}`,
+        userName: formData.email, // Using email as username
+        email: formData.email,
+        password: formData.password,
+        role: 'Guest', // Default role - must match backend enum values
+        phone: formData.phone,
+        isStaff: false, // Default to non-staff user
+        department: null, // Optional field
+      };
+
+      //  Make API call to backend
+
+      const response = await axios.post(
+        'http://localhost:4000/api/users/signup',
+        payload
+      );
+
+      //  Handle success
+      if (response.data.success) {
+        setFeedback({
+          message: 'Sign up successful! Redirecting to login...',
+          type: 'success',
+        });
+        console.log('Sign up response:', response.data);
+
+        //  Redirect to login after 0.5 seconds
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 500);
+      } else {
+        setFeedback({
+          message: response.data.message || 'Sign up failed. Please try again.',
+          type: 'error',
+        });
+      }
+      console.log('Sign up response:', response.data);
     } catch (error) {
+      // Handle error response
       console.error('Sign up error:', error);
+
+      let errorMessage = 'Sign up failed. Please try again.';
+
+      if (error.response?.data?.error) {
+        // Use the specific error message from backend
+        errorMessage = error.response.data.error;
+      } else if (error.response?.status === 400) {
+        errorMessage =
+          'Invalid request. Please check your information and try again.';
+      } else if (error.response?.status === 409) {
+        errorMessage = 'An account with this email already exists.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      setFeedback({ message: errorMessage, type: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -127,6 +181,13 @@ const SignUp = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="auth-form">
+                  {/* Feedback message */}
+                  {feedback.message && (
+                    <div className={`feedback ${feedback.type}`}>
+                      {feedback.message}
+                    </div>
+                  )}
+
                   <div className="name-row">
                     <div className="input-group">
                       <label htmlFor="firstName">First Name</label>
@@ -202,6 +263,7 @@ const SignUp = () => {
                         className={errors.phone ? 'error' : ''}
                       />
                     </div>
+
                     {errors.phone && (
                       <span className="error-message">{errors.phone}</span>
                     )}
@@ -424,6 +486,12 @@ const SignUp = () => {
           font-family: var(--secondary-font);
           transition: all 0.3s ease;
           background: #fafafa;
+
+          color: #333 !important;
+        }
+
+        .input-wrapper input::placeholder {
+          color: #999 !important;
         }
 
         .input-wrapper input:focus {
@@ -636,6 +704,27 @@ const SignUp = () => {
           .auth-container {
             min-height: 70vh;
             padding: 40px 0;
+          }
+
+          .feedback {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 4px;
+            text-align: center;
+            font-family: var(--secondary-font);
+            font-weight: 500;
+          }
+
+          .feedback.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+          }
+
+          .feedback.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
           }
         }
       `}</style>

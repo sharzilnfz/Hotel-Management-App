@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, User, Mail, Lock, AlertCircle, Phone } from "lucide-react";
@@ -19,15 +20,80 @@ const Register = () => {
   const [countryCode, setCountryCode] = useState("+1");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState("");
+=======
+//Register.tsx
+import { useAuth } from '@/contexts/AuthContext';
+import { motion } from 'framer-motion';
+import { AlertCircle, ArrowLeft, Lock, Mail, Phone, User } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
+const Register = () => {
+  const navigate = useNavigate();
+  const { register, socialLogin, isLoading } = useAuth();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const validateForm = () => {
+    // Reset error
+    setError('');
+
+    // Validate name
+    if (!name.trim()) {
+      setError('Full name is required.');
+      return false;
+    }
+
+    if (name.trim().length < 2) {
+      setError('Full name must be at least 2 characters long.');
+      return false;
+    }
+
+    // Validate email
+    if (!email.trim()) {
+      setError('Email is required.');
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address.');
+      return false;
+    }
+
+    // Validate password
+    if (!password) {
+      setError('Password is required.');
+      return false;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return false;
+    }
+
+    // Validate password confirmation
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return false;
+    }
+
+    return true;
+  };
+>>>>>>> 7df19ce79ee5430d0214373f34eb50bfe0c2001e
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+
+    if (!validateForm()) {
       return;
     }
+<<<<<<< HEAD
     
     if (password.length < 6) {
       setError("Password must be at least 6 characters long.");
@@ -39,20 +105,35 @@ const Register = () => {
       return;
     }
     
+=======
+
+>>>>>>> 7df19ce79ee5430d0214373f34eb50bfe0c2001e
     try {
-      await register(name, email, password);
-      navigate("/");
+      await register(name, email, password, phone);
+      toast.success('Account created successfully!');
+      navigate('/');
     } catch (err) {
-      setError("Could not create account. Please try again.");
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Could not create account. Please try again.';
+      setError(errorMessage);
+      toast.error('Registration failed. Please check your details.');
     }
   };
 
-  const handleSocialLogin = async (provider: "google" | "apple") => {
+  const handleSocialLogin = async (provider: 'google' | 'apple') => {
     try {
       await socialLogin(provider);
-      navigate("/");
+      toast.success(`Successfully signed up with ${provider}!`);
+      navigate('/');
     } catch (err) {
-      setError(`Could not sign up with ${provider}. Please try again.`);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : `Could not sign up with ${provider}. Please try again.`;
+      setError(errorMessage);
+      toast.error(`${provider} signup failed.`);
     }
   };
 
@@ -62,7 +143,13 @@ const Register = () => {
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-600">
           <ArrowLeft size={24} />
         </button>
+<<<<<<< HEAD
         <h1 className="font-playfair text-center flex-1 mr-8 text-hotel-burgundy-dark">Create Account</h1>
+=======
+        <h1 className="text-2xl font-playfair text-center flex-1 mr-8">
+          Create Account
+        </h1>
+>>>>>>> 7df19ce79ee5430d0214373f34eb50bfe0c2001e
       </div>
 
       <motion.div 
@@ -135,6 +222,7 @@ const Register = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+<<<<<<< HEAD
                 Mobile Number
               </label>
               <div className="flex gap-2">
@@ -155,6 +243,21 @@ const Register = () => {
                     placeholder="123 456 7890" 
                   />
                 </div>
+=======
+                Phone Number <span className="text-gray-400">(Optional)</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Phone size={18} className="text-gray-400" />
+                </div>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="pl-10 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-hotel-burgundy focus:border-transparent"
+                  placeholder="+1 (555) 123-4567"
+                />
+>>>>>>> 7df19ce79ee5430d0214373f34eb50bfe0c2001e
               </div>
             </div>
 
@@ -175,6 +278,11 @@ const Register = () => {
                   placeholder="••••••••" 
                 />
               </div>
+              {password && password.length < 6 && (
+                <p className="text-xs text-amber-600 mt-1">
+                  Password must be at least 6 characters long
+                </p>
+              )}
             </div>
 
             <div>
@@ -194,17 +302,38 @@ const Register = () => {
                   placeholder="••••••••" 
                 />
               </div>
+              {confirmPassword && password !== confirmPassword && (
+                <p className="text-xs text-red-600 mt-1">
+                  Passwords do not match
+                </p>
+              )}
             </div>
 
+<<<<<<< HEAD
             <div className="flex items-start">
               <input type="checkbox" id="termsCheckbox" required className="mt-1 border-gray-300 rounded text-hotel-burgundy focus:ring-hotel-burgundy" />
               <label htmlFor="termsCheckbox" className="ml-2 text-sm text-gray-600">
                 I agree to the{" "}
                 <a href="#" className="text-hotel-burgundy">
+=======
+            <div className="flex items-start space-x-3">
+              <input
+                type="checkbox"
+                id="termsCheckbox"
+                required
+                className="mt-1 h-4 w-4 border-gray-300 rounded text-hotel-burgundy focus:ring-hotel-burgundy focus:ring-2"
+              />
+              <label
+                htmlFor="termsCheckbox"
+                className="text-sm text-gray-600 leading-relaxed"
+              >
+                I agree to the{' '}
+                <a href="#" className="text-hotel-burgundy hover:underline">
+>>>>>>> 7df19ce79ee5430d0214373f34eb50bfe0c2001e
                   Terms of Service
-                </a>{" "}
-                and{" "}
-                <a href="#" className="text-hotel-burgundy">
+                </a>{' '}
+                and{' '}
+                <a href="#" className="text-hotel-burgundy hover:underline">
                   Privacy Policy
                 </a>
               </label>
@@ -215,7 +344,7 @@ const Register = () => {
               disabled={isLoading} 
               className="w-full bg-hotel-burgundy text-white py-3 rounded-lg font-medium flex items-center justify-center"
             >
-              {isLoading ? "Creating Account..." : "Create Account"}
+              {isLoading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
 
@@ -232,12 +361,35 @@ const Register = () => {
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-4">
+<<<<<<< HEAD
               <button onClick={() => handleSocialLogin("google")} className="py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50">
                 <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" className="w-5 h-5" />
                 <span>Google</span>
               </button>
               <button onClick={() => handleSocialLogin("apple")} className="py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50">
                 <img src="https://www.svgrepo.com/show/494552/apple.svg" alt="Apple" className="w-5 h-5" />
+=======
+              <button
+                onClick={() => handleSocialLogin('google')}
+                className="py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
+              >
+                <img
+                  src="https://www.svgrepo.com/show/355037/google.svg"
+                  alt="Google"
+                  className="w-5 h-5"
+                />
+                <span>Google</span>
+              </button>
+              <button
+                onClick={() => handleSocialLogin('apple')}
+                className="py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
+              >
+                <img
+                  src="https://www.svgrepo.com/show/494552/apple.svg"
+                  alt="Apple"
+                  className="w-5 h-5"
+                />
+>>>>>>> 7df19ce79ee5430d0214373f34eb50bfe0c2001e
                 <span>Apple</span>
               </button>
             </div>
@@ -245,8 +397,11 @@ const Register = () => {
 
           <div className="text-center mt-8">
             <p className="text-gray-600">
-              Already have an account?{" "}
-              <Link to="/auth/login" className="text-hotel-burgundy font-medium">
+              Already have an account?{' '}
+              <Link
+                to="/auth/login"
+                className="text-hotel-burgundy font-medium"
+              >
                 Sign In
               </Link>
             </p>

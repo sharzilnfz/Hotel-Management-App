@@ -156,9 +156,55 @@ export const createEvent = async (req, res) => {
   }
 };
 
+// Helper function to automatically update event statuses based on current date/time
+const updateEventStatusesAutomatically = async () => {
+  try {
+    const currentDate = new Date();
+    const events = await Event.find({
+      status: { $in: ['upcoming', 'ongoing'] },
+    });
+
+    for (const event of events) {
+      const eventDate = new Date(event.date);
+      const [startHour, startMinute] = event.startTime.split(':').map(Number);
+      const [endHour, endMinute] = event.endTime.split(':').map(Number);
+
+      const eventStartDateTime = new Date(eventDate);
+      eventStartDateTime.setHours(startHour, startMinute, 0, 0);
+
+      const eventEndDateTime = new Date(eventDate);
+      eventEndDateTime.setHours(endHour, endMinute, 0, 0);
+
+      let newStatus = event.status;
+
+      // Determine status based on current time
+      if (currentDate < eventStartDateTime) {
+        newStatus = 'upcoming';
+      } else if (
+        currentDate >= eventStartDateTime &&
+        currentDate <= eventEndDateTime
+      ) {
+        newStatus = 'ongoing';
+      } else if (currentDate > eventEndDateTime) {
+        newStatus = 'completed';
+      }
+
+      // Update status if it has changed
+      if (newStatus !== event.status) {
+        await Event.findByIdAndUpdate(event._id, { status: newStatus });
+      }
+    }
+  } catch (error) {
+    console.error('Error updating event statuses automatically:', error);
+  }
+};
+
 // Get all events
 export const getAllEvents = async (req, res) => {
   try {
+    // First, automatically update event statuses
+    await updateEventStatusesAutomatically();
+
     const events = await Event.find().sort({ date: 1 });
     res.status(200).json({
       success: true,
@@ -178,6 +224,9 @@ export const getAllEvents = async (req, res) => {
 // Get a single event by ID
 export const getEventById = async (req, res) => {
   try {
+    // First, automatically update event statuses
+    await updateEventStatusesAutomatically();
+
     const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({
@@ -404,9 +453,34 @@ export const updateEventStatus = async (req, res) => {
   }
 };
 
+// Manually trigger automatic status updates for all events
+export const triggerStatusUpdate = async (req, res) => {
+  try {
+    await updateEventStatusesAutomatically();
+
+    const events = await Event.find().sort({ date: 1 });
+    res.status(200).json({
+      success: true,
+      message: 'Event statuses updated successfully',
+      count: events.length,
+      data: events,
+    });
+  } catch (error) {
+    console.error('Error triggering status update:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update event statuses',
+      error: error.message,
+    });
+  }
+};
+
 // Get upcoming events
 export const getUpcomingEvents = async (req, res) => {
   try {
+    // First, automatically update event statuses
+    await updateEventStatusesAutomatically();
+
     const currentDate = new Date();
 
     const events = await Event.find({
