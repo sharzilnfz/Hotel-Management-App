@@ -1,7 +1,8 @@
+
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Calendar, Clock, User, Utensils, Search, Bell, Star, Award, Flower2, LayoutGrid } from "lucide-react";
+import { Home, Calendar, Clock, User, Utensils, Search, Bell, Star, Award, Flower2, LayoutGrid, Bed, Sparkles } from "lucide-react";
 import { SideMenu } from "@/components/ui/side-menu";
 
 interface MobileLayoutProps {
@@ -12,6 +13,7 @@ interface MobileLayoutProps {
   showBottomNav?: boolean;
   hideHeader?: boolean;
 }
+
 export function MobileLayout({
   children,
   showBackButton = false,
@@ -21,9 +23,11 @@ export function MobileLayout({
   hideHeader = false
 }: MobileLayoutProps) {
   const location = useLocation();
+  
   const isActive = (path: string) => {
     return location.pathname === path;
   };
+
   const navItems = [{
     path: "/",
     label: "Home",
@@ -31,7 +35,7 @@ export function MobileLayout({
   }, {
     path: "/rooms",
     label: "Rooms",
-    icon: <Star size={20} strokeWidth={2.5} />
+    icon: <Bed size={20} strokeWidth={2.5} />
   }, {
     path: "/restaurant",
     label: "Dining",
@@ -43,7 +47,7 @@ export function MobileLayout({
   }, {
     path: "/events",
     label: "Events",
-    icon: <Calendar size={20} strokeWidth={2.5} />
+    icon: <Sparkles size={20} strokeWidth={2.5} />
   }];
 
   // Page transition variants
@@ -90,14 +94,14 @@ export function MobileLayout({
                       </svg>
                     </motion.button>}
                   {showLogo && <div className="flex items-center gap-3">
-                      <img alt="Parkside Plaza Hotel" src="/lovable-uploads/e00f85de-b767-4bf4-bc3a-9ba4cf0e2a9d.png" className="h-14 w-auto object-contain" />
+                      <img alt="Parkside Plaza Hotel" src="/lovable-uploads/e00f85de-b767-4bf4-bc3a-9ba4cf0e2a9d.png" className="h-14 w-auto object-contain-middle-header" />
                     </div>}
-                  {title && <h1 className="text-xl font-playfair font-bold text-hotel-burgundy tracking-tight">
+                  {title && <h1 className="font-playfair tracking-tight text-slate-900 px-0 text-xs text-left mx-0 my-0 font-semibold">
                       {title}
                     </h1>}
                 </div>
                 <div className="flex items-center gap-3">
-                  <Link to="/profile" className="w-10 h-10 flex items-center justify-center text-hotel-charcoal bg-hotel-pearl/80 hover:bg-hotel-beige/80 rounded-xl border border-hotel-beige/50 transition-all duration-200 shadow-sm">
+                  <Link to="/profile" className="w-10 h-10 flex items-center justify-center text-hotel-charcoal w-10 hover:bg-hotel-beige/80 rounded-xl border border-hotel-beige/50 transition-all duration-200 shadow-sm">
                     <User size={16} strokeWidth={2} />
                   </Link>
                   <SideMenu trigger={<button className="w-10 h-10 flex items-center justify-center text-hotel-charcoal bg-hotel-pearl/80 hover:bg-hotel-beige/80 rounded-xl border border-hotel-beige/50 transition-all duration-200 shadow-sm">

@@ -1,488 +1,400 @@
 import React, { useState } from "react";
 import { MobileLayout } from "@/components/ui/mobile-layout";
-import { useBooking, MenuItem } from "@/contexts/BookingContext";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { BookingConfirmation } from "@/components/ui/booking-confirmation";
-import { toast } from "sonner";
-import { Utensils, CreditCard, Wallet, Plus, Minus, Home, Truck, MapPin } from "lucide-react";
+import { MenuItemCard } from "@/components/restaurant/MenuItemCard";
+import { ExtrasSelector } from "@/components/ui/extras-selector";
+import { Utensils, MapPin, Home, Users, Star, Award } from "lucide-react";
 import { motion } from "framer-motion";
-
-type PaymentMethod = "card" | "cash";
-type OrderType = "dine-in" | "room-service" | "delivery";
-type OrderItem = { menuItemId: string; quantity: number; };
-
-interface OrderDetails {
-  table?: string;
-  roomNumber?: string;
-  address?: string;
-  additionalComments?: string;
-}
-
+import { useBooking } from "@/contexts/BookingContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { GuestInfoForm } from "@/components/events/GuestInfoForm";
+import { useNavigate } from "react-router-dom";
+type OrderType = "dine-in" | "room" | "delivery";
 const RestaurantPage = () => {
-  const { menuItems, bookRestaurant } = useBooking();
+  const {
+    menuItems,
+    getDiningExtras,
+    getDiningAddons
+  } = useBooking();
+  const {
+    user,
+    isAuthenticated
+  } = useAuth();
+  const navigate = useNavigate();
   const [orderType, setOrderType] = useState<OrderType>("dine-in");
-  const [selectedTable, setSelectedTable] = useState<string>("");
+  const [tableNumber, setTableNumber] = useState<string>("");
   const [roomNumber, setRoomNumber] = useState<string>("");
   const [deliveryAddress, setDeliveryAddress] = useState<string>("");
-  const [selectedItems, setSelectedItems] = useState<OrderItem[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
-  const [additionalComments, setAdditionalComments] = useState<string>("");
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [confirmation, setConfirmation] = useState<any>(null);
-
-  const tables = Array.from({ length: 20 }, (_, i) => ({
-    id: `${i + 1}`,
-    name: `Table ${i + 1}`,
-    capacity: i < 10 ? 4 : 6
-  }));
-
-  const addToOrder = (menuItemId: string) => {
-    const existingItemIndex = selectedItems.findIndex(item => item.menuItemId === menuItemId);
-    
-    if (existingItemIndex >= 0) {
-      const updatedItems = [...selectedItems];
-      updatedItems[existingItemIndex].quantity += 1;
-      setSelectedItems(updatedItems);
-    } else {
-      setSelectedItems([...selectedItems, { menuItemId, quantity: 1 }]);
-    }
-  };
-
-  const removeFromOrder = (menuItemId: string) => {
-    const existingItemIndex = selectedItems.findIndex(item => item.menuItemId === menuItemId);
-    
-    if (existingItemIndex >= 0) {
-      const updatedItems = [...selectedItems];
-      if (updatedItems[existingItemIndex].quantity > 1) {
-        updatedItems[existingItemIndex].quantity -= 1;
-      } else {
-        updatedItems.splice(existingItemIndex, 1);
+  const [cart, setCart] = useState<any[]>([]);
+  const [selectedExtras, setSelectedExtras] = useState<{
+    id: string;
+    quantity: number;
+  }[]>([]);
+  const [selectedAddons, setSelectedAddons] = useState<{
+    id: string;
+    quantity: number;
+  }[]>([]);
+  const [additionalComment, setAdditionalComment] = useState<string>("");
+  const [showGuestForm, setShowGuestForm] = useState(false);
+  const [pendingBookingData, setPendingBookingData] = useState<any>(null);
+  const {
+    toast
+  } = useToast();
+  const mainItems = menuItems.filter(item => item.category === "mains");
+  const dessertItems = menuItems.filter(item => item.category === "desserts");
+  const addToCart = (item: any) => {
+    setCart(prev => {
+      const existing = prev.find(cartItem => cartItem.id === item.id);
+      if (existing) {
+        return prev.map(cartItem => cartItem.id === item.id ? {
+          ...cartItem,
+          quantity: cartItem.quantity + 1
+        } : cartItem);
       }
-      setSelectedItems(updatedItems);
-    }
+      return [...prev, {
+        ...item,
+        quantity: 1
+      }];
+    });
   };
-
-  const getOrderTotal = () => {
-    return selectedItems.reduce((total, item) => {
-      const menuItem = menuItems.find(m => m.id === item.menuItemId);
-      return total + (menuItem ? menuItem.price * item.quantity : 0);
+  const removeFromCart = (itemId: number) => {
+    setCart(prev => {
+      return prev.map(item => {
+        if (item.id === itemId) {
+          if (item.quantity > 1) {
+            return {
+              ...item,
+              quantity: item.quantity - 1
+            };
+          } else {
+            return null;
+          }
+        }
+        return item;
+      }).filter(item => item !== null);
+    });
+  };
+  const updateQuantity = (itemId: number, quantity: number) => {
+    if (quantity === 0) {
+      setCart(prev => prev.filter(item => item.id !== itemId));
+      return;
+    }
+    setCart(prev => prev.map(item => item.id === itemId ? {
+      ...item,
+      quantity
+    } : item));
+  };
+  const getItemQuantity = (itemId: number) => {
+    const cartItem = cart.find(item => item.id === itemId);
+    return cartItem ? cartItem.quantity : 0;
+  };
+  const calculateExtrasTotal = () => {
+    const diningExtras = getDiningExtras();
+    const diningAddons = getDiningAddons();
+    const extrasTotal = selectedExtras.reduce((total, selected) => {
+      const extra = diningExtras.find(e => e.id === selected.id);
+      return total + (extra ? extra.price * selected.quantity : 0);
     }, 0);
+    const addonsTotal = selectedAddons.reduce((total, selected) => {
+      const addon = diningAddons.find(a => a.id === selected.id);
+      return total + (addon ? addon.price * selected.quantity : 0);
+    }, 0);
+    return extrasTotal + addonsTotal;
   };
-
-  const validateOrder = () => {
-    if (orderType === "dine-in" && !selectedTable) {
-      toast.error("Please select a table");
-      return false;
-    }
-
-    if (orderType === "room-service" && !roomNumber) {
-      toast.error("Please enter your room number");
-      return false;
-    }
-
-    if (orderType === "delivery" && !deliveryAddress) {
-      toast.error("Please enter delivery address");
-      return false;
-    }
-
-    if (selectedItems.length === 0) {
-      toast.error("Please add items to your order");
-      return false;
-    }
-
-    return true;
+  const getCartTotal = () => {
+    const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+    return cartTotal + calculateExtrasTotal();
   };
-
-  const handlePlaceOrder = () => {
-    if (!validateOrder()) return;
-
-    try {
-      const orderDetails: any = {
-        items: selectedItems,
-        additionalComments,
-      };
-
-      if (orderType === "dine-in") {
-        orderDetails.roomNumber = selectedTable; // Using roomNumber field to store table number
-      } else if (orderType === "room-service") {
-        orderDetails.roomNumber = roomNumber;
-      } else if (orderType === "delivery") {
-        orderDetails.address = deliveryAddress;
-      }
-
-      const booking = bookRestaurant(orderType, orderDetails);
-      
-      setConfirmation({
-        confirmationCode: booking.confirmationCode,
-        type: orderType,
-        location: orderType === "dine-in" 
-          ? `Table ${selectedTable}` 
-          : orderType === "room-service"
-            ? `Room ${roomNumber}`
-            : deliveryAddress,
-        paymentMethod,
-        items: selectedItems.map(item => {
-          const menuItem = menuItems.find(m => m.id === item.menuItemId);
-          return {
-            name: menuItem?.name,
-            quantity: item.quantity,
-            price: menuItem?.price
-          };
-        }),
-        additionalComments,
-        total: getOrderTotal()
+  const handleOrder = () => {
+    if (cart.length === 0) {
+      toast({
+        title: "Cart is empty",
+        description: "Please add items to your cart before ordering",
+        variant: "destructive"
       });
-      
-      setShowConfirmation(true);
-      toast.success("Order placed successfully!");
-    } catch (error) {
-      toast.error("Failed to place order");
-      console.error(error);
+      return;
     }
-  };
 
-  const resetOrder = () => {
-    setOrderType("dine-in");
-    setSelectedTable("");
+    // Validation based on order type
+    if (orderType === "dine-in" && !tableNumber) {
+      toast({
+        title: "Table number required",
+        description: "Please enter your table number",
+        variant: "destructive"
+      });
+      return;
+    }
+    if (orderType === "room" && !roomNumber) {
+      toast({
+        title: "Room number required",
+        description: "Please enter your room number",
+        variant: "destructive"
+      });
+      return;
+    }
+    if (orderType === "delivery" && !deliveryAddress) {
+      toast({
+        title: "Delivery address required",
+        description: "Please enter your delivery address",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Store booking data and show guest form
+    setPendingBookingData({
+      orderType,
+      tableNumber,
+      roomNumber,
+      deliveryAddress,
+      cart,
+      selectedExtras,
+      selectedAddons,
+      additionalComment,
+      totalPrice: getCartTotal()
+    });
+    setShowGuestForm(true);
+  };
+  const handleGuestInfoSubmit = (guestInfo: any) => {
+    if (!pendingBookingData) return;
+    let orderDetails = "";
+    if (pendingBookingData.orderType === "dine-in") {
+      orderDetails = `Table ${pendingBookingData.tableNumber}`;
+    } else if (pendingBookingData.orderType === "room") {
+      orderDetails = `Room ${pendingBookingData.roomNumber}`;
+    } else {
+      orderDetails = `Delivery to ${pendingBookingData.deliveryAddress}`;
+    }
+
+    // Navigate to payment page with booking data
+    const bookingData = {
+      bookingType: "dining",
+      title: `${pendingBookingData.orderType.charAt(0).toUpperCase() + pendingBookingData.orderType.slice(1)} Order`,
+      date: new Date().toLocaleDateString(),
+      time: "ASAP",
+      details: orderDetails,
+      location: "Hotel Restaurant",
+      guestInfo,
+      totalPrice: pendingBookingData.totalPrice,
+      selectedExtras: pendingBookingData.selectedExtras,
+      selectedAddons: pendingBookingData.selectedAddons,
+      diningData: {
+        date: new Date(),
+        time: "ASAP",
+        partySize: 1,
+        selectedExtras: pendingBookingData.selectedExtras,
+        selectedAddons: pendingBookingData.selectedAddons,
+        cart: pendingBookingData.cart,
+        orderType: pendingBookingData.orderType,
+        orderDetails: pendingBookingData
+      }
+    };
+    navigate('/payment', {
+      state: {
+        bookingData
+      }
+    });
+
+    // Reset form
+    setTableNumber("");
     setRoomNumber("");
     setDeliveryAddress("");
-    setSelectedItems([]);
-    setPaymentMethod("card");
-    setAdditionalComments("");
-    setShowConfirmation(false);
-    setConfirmation(null);
+    setCart([]);
+    setSelectedExtras([]);
+    setSelectedAddons([]);
+    setAdditionalComment("");
+    setShowGuestForm(false);
+    setPendingBookingData(null);
+  };
+  const handleGuestFormCancel = () => {
+    setShowGuestForm(false);
+    setPendingBookingData(null);
   };
 
-  // Filter menu items by category
-  const mainCourses = menuItems.filter(item => item.category === "mains");
-  const desserts = menuItems.filter(item => item.category === "desserts");
-
-  if (showConfirmation) {
-    return (
-      <MobileLayout title="Restaurant" showBackButton>
-        <div className="p-4">
-          <BookingConfirmation
-            bookingType="restaurant"
-            confirmationCode={confirmation.confirmationCode}
-            title={`${orderType === "dine-in" ? "Dine-in" : orderType === "room-service" ? "Room Service" : "Delivery"} Order`}
-            date={new Date().toLocaleDateString()}
-            location={confirmation.location}
-            details={`Payment: ${confirmation.paymentMethod === 'card' ? 'Credit Card' : 'Cash'}`}
-            name="Guest" // Default name for now
-            contact="N/A" // Default contact for now
-            email="N/A" // Default email for now
-          />
-          
-          <div className="mt-6 bg-white rounded-lg p-4 shadow-sm">
-            <h3 className="text-lg font-playfair font-medium text-hotel-burgundy mb-3">Order Details</h3>
-            {confirmation.items.map((item: any, index: number) => (
-              <div key={index} className="flex justify-between py-2 border-b border-gray-100 last:border-0">
-                <div className="flex items-center">
-                  <span className="text-sm font-medium">{item.name}</span>
-                  <span className="text-sm text-gray-500 ml-2">x{item.quantity}</span>
-                </div>
-                <div className="font-medium">${(item.price * item.quantity).toFixed(2)}</div>
-              </div>
-            ))}
-            
-            {confirmation.additionalComments && (
-              <div className="mt-4 pt-2 border-t border-gray-200">
-                <h4 className="text-sm font-medium text-gray-700">Additional Comments:</h4>
-                <p className="text-sm text-gray-600 mt-1">{confirmation.additionalComments}</p>
-              </div>
-            )}
-            
-            <div className="flex justify-between items-center mt-4 pt-2 border-t border-gray-200">
-              <div className="font-semibold">Total</div>
-              <div className="font-bold text-hotel-burgundy">${confirmation.total.toFixed(2)}</div>
-            </div>
-          </div>
-          
-          <div className="mt-6 text-center">
-            <Button 
-              onClick={resetOrder}
-              className="bg-hotel-burgundy hover:bg-hotel-burgundy/90 text-white"
-            >
-              Place New Order
-            </Button>
-          </div>
-        </div>
-      </MobileLayout>
-    );
+  // Show guest form if active
+  if (showGuestForm && pendingBookingData) {
+    const title = `${pendingBookingData.orderType.charAt(0).toUpperCase() + pendingBookingData.orderType.slice(1)} Order`;
+    return <MobileLayout title="Guest Information" showBackButton>
+        <GuestInfoForm eventTitle={title} onSubmit={handleGuestInfoSubmit} onCancel={handleGuestFormCancel} />
+      </MobileLayout>;
   }
+  return <MobileLayout title="Restaurant" showBackButton>
+      <div className="max-w-md mx-auto p-4">
+        <div className="mb-8">
+          <motion.div initial={{
+          opacity: 0,
+          y: 20
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-hotel-burgundy/10 rounded-full">
+                <Utensils className="w-8 h-8 text-hotel-burgundy" />
+              </div>
+            </div>
+            <h1 className="font-playfair font-bold text-hotel-burgundy mb-2 text-xl">
+              Fine Dining Restaurant
+            </h1>
+            <p className="text-gray-500 text-xs text-center">
+              Experience culinary excellence with our award-winning cuisine
+            </p>
+          </motion.div>
+        </div>
 
-  return (
-    <MobileLayout title="Restaurant" showBackButton>
-      <div className="p-4 pb-32">
         {/* Order Type Selection */}
-        <div className="bg-white rounded-lg p-4 mb-6 shadow-sm">
-          <h3 className="text-lg font-playfair font-medium text-hotel-burgundy mb-3">Order Type</h3>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={() => setOrderType("dine-in")}
-              className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border ${
-                orderType === "dine-in" 
-                  ? "bg-hotel-burgundy text-white border-hotel-burgundy" 
-                  : "border-gray-200"
-              }`}
-            >
-              <Utensils size={20} />
-              <span className="text-sm">Dine-in</span>
-            </button>
-            <button
-              onClick={() => setOrderType("room-service")}
-              className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border ${
-                orderType === "room-service" 
-                  ? "bg-hotel-burgundy text-white border-hotel-burgundy" 
-                  : "border-gray-200"
-              }`}
-            >
-              <Home size={20} />
-              <span className="text-sm">Room Service</span>
-            </button>
-            <button
-              onClick={() => setOrderType("delivery")}
-              className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border ${
-                orderType === "delivery" 
-                  ? "bg-hotel-burgundy text-white border-hotel-burgundy" 
-                  : "border-gray-200"
-              }`}
-            >
-              <Truck size={20} />
-              <span className="text-sm">Delivery</span>
-            </button>
-          </div>
+        <div className="grid grid-cols-3 gap-2 mb-6 p-1 bg-hotel-pearl rounded-lg">
+          <button onClick={() => setOrderType("dine-in")} className={`py-2 px-3 rounded-md text-sm font-medium transition-all flex flex-col items-center gap-1 ${orderType === "dine-in" ? "bg-hotel-burgundy text-white shadow-sm" : "text-hotel-charcoal hover:bg-hotel-cream"}`}>
+            <Users className="w-4 h-4" />
+            Dine-in
+          </button>
+          <button onClick={() => setOrderType("room")} className={`py-2 px-3 rounded-md text-sm font-medium transition-all flex flex-col items-center gap-1 ${orderType === "room" ? "bg-hotel-burgundy text-white shadow-sm" : "text-hotel-charcoal hover:bg-hotel-cream"}`}>
+            <Home className="w-4 h-4" />
+            Room
+          </button>
+          <button onClick={() => setOrderType("delivery")} className={`py-2 px-3 rounded-md text-sm font-medium transition-all flex flex-col items-center gap-1 ${orderType === "delivery" ? "bg-hotel-burgundy text-white shadow-sm" : "text-hotel-charcoal hover:bg-hotel-cream"}`}>
+            <MapPin className="w-4 h-4" />
+            Delivery
+          </button>
         </div>
-        
-        {/* Location Selection */}
-        <div className="bg-white rounded-lg p-4 mb-6 shadow-sm">
-          <h3 className="text-lg font-playfair font-medium text-hotel-burgundy mb-3">
-            {orderType === "dine-in" 
-              ? "Select Table" 
-              : orderType === "room-service" 
-                ? "Room Number"
-                : "Delivery Address"
-            }
-          </h3>
-          
-          {orderType === "dine-in" && (
-            <Select 
-              value={selectedTable}
-              onValueChange={setSelectedTable}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a table" />
-              </SelectTrigger>
-              <SelectContent>
-                {tables.map(table => (
-                  <SelectItem key={table.id} value={table.id}>
-                    {table.name} ({table.capacity} seats)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          
-          {orderType === "room-service" && (
-            <Input
-              type="text"
-              placeholder="Enter your room number"
-              value={roomNumber}
-              onChange={(e) => setRoomNumber(e.target.value)}
-            />
-          )}
-          
-          {orderType === "delivery" && (
-            <div className="space-y-4">
-              <div className="h-40 bg-gray-100 rounded-lg flex items-center justify-center">
-                <MapPin className="text-gray-400" size={24} />
-                <span className="ml-2 text-gray-500">Map will be implemented here</span>
-              </div>
-              <Input
-                type="text"
-                placeholder="Enter delivery address"
-                value={deliveryAddress}
-                onChange={(e) => setDeliveryAddress(e.target.value)}
-              />
-            </div>
-          )}
-        </div>
-        
+
+        {/* Order Details Based on Type */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center text-hotel-burgundy text-base">
+              {orderType === "dine-in" && <Users className="w-5 h-5 mr-2" />}
+              {orderType === "room" && <Home className="w-5 h-5 mr-2" />}
+              {orderType === "delivery" && <MapPin className="w-5 h-5 mr-2" />}
+              {orderType === "dine-in" && "Table Information"}
+              {orderType === "room" && "Room Information"}
+              {orderType === "delivery" && "Delivery Information"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {orderType === "dine-in" && <div>
+                <label className="block text-sm font-medium text-hotel-sand-dark mb-2 mx-[13px] bg-transparent">
+                  Table Number
+                </label>
+                <Input type="text" value={tableNumber} onChange={e => setTableNumber(e.target.value)} placeholder="Enter table number" className="w-full" />
+              </div>}
+
+            {orderType === "room" && <div>
+                <label className="block text-sm font-medium text-hotel-charcoal mb-2">
+                  Room Number
+                </label>
+                <Input type="text" value={roomNumber} onChange={e => setRoomNumber(e.target.value)} placeholder="Enter room number" className="w-full" />
+              </div>}
+
+            {orderType === "delivery" && <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-hotel-charcoal mb-2">
+                    Delivery Address
+                  </label>
+                  <Textarea value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)} placeholder="Enter your delivery address" className="w-full min-h-[80px]" />
+                </div>
+                <div className="bg-hotel-beige/30 rounded-lg p-4 text-center">
+                  <MapPin className="w-8 h-8 mx-auto mb-2 text-hotel-charcoal/60" />
+                  <p className="text-sm text-hotel-charcoal/60">
+                    Map location selector coming soon
+                  </p>
+                </div>
+              </div>}
+          </CardContent>
+        </Card>
+
         {/* Menu Items */}
-        <div className="bg-white rounded-lg p-4 mb-6 shadow-sm">
-          <h3 className="text-lg font-playfair font-medium text-hotel-burgundy mb-3">Main Courses</h3>
-          <div className="grid gap-4">
-            {mainCourses.map((item) => (
-              <Card key={item.id} className="overflow-hidden">
-                <div className="flex h-24">
-                  <div className="w-1/3 overflow-hidden">
-                    <img 
-                      src={item.image} 
-                      alt={item.name} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <CardContent className="p-3 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h4 className="font-medium text-hotel-burgundy">{item.name}</h4>
-                      <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div className="font-bold text-hotel-burgundy">${item.price}</div>
-                      <div className="flex items-center gap-2">
-                        {selectedItems.find(i => i.menuItemId === item.id) ? (
-                          <>
-                            <button 
-                              onClick={() => removeFromOrder(item.id)}
-                              className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
-                            >
-                              <Minus size={14} />
-                            </button>
-                            <span className="w-6 text-center">
-                              {selectedItems.find(i => i.menuItemId === item.id)?.quantity || 0}
-                            </span>
-                            <button 
-                              onClick={() => addToOrder(item.id)}
-                              className="w-7 h-7 rounded-full bg-hotel-burgundy text-white flex items-center justify-center"
-                            >
-                              <Plus size={14} />
-                            </button>
-                          </>
-                        ) : (
-                          <button 
-                            onClick={() => addToOrder(item.id)}
-                            className="px-3 py-1 rounded-full bg-hotel-burgundy text-white text-xs flex items-center gap-1"
-                          >
-                            <Plus size={12} /> Add
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg p-4 mb-6 shadow-sm">
-          <h3 className="text-lg font-playfair font-medium text-hotel-burgundy mb-3">Desserts</h3>
-          <div className="grid gap-4">
-            {desserts.map((item) => (
-              <Card key={item.id} className="overflow-hidden">
-                <div className="flex h-24">
-                  <div className="w-1/3 overflow-hidden">
-                    <img 
-                      src={item.image} 
-                      alt={item.name} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <CardContent className="p-3 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h4 className="font-medium text-hotel-burgundy">{item.name}</h4>
-                      <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div className="font-bold text-hotel-burgundy">${item.price}</div>
-                      <div className="flex items-center gap-2">
-                        {selectedItems.find(i => i.menuItemId === item.id) ? (
-                          <>
-                            <button 
-                              onClick={() => removeFromOrder(item.id)}
-                              className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
-                            >
-                              <Minus size={14} />
-                            </button>
-                            <span className="w-6 text-center">
-                              {selectedItems.find(i => i.menuItemId === item.id)?.quantity || 0}
-                            </span>
-                            <button 
-                              onClick={() => addToOrder(item.id)}
-                              className="w-7 h-7 rounded-full bg-hotel-burgundy text-white flex items-center justify-center"
-                            >
-                              <Plus size={14} />
-                            </button>
-                          </>
-                        ) : (
-                          <button 
-                            onClick={() => addToOrder(item.id)}
-                            className="px-3 py-1 rounded-full bg-hotel-burgundy text-white text-xs flex items-center gap-1"
-                          >
-                            <Plus size={12} /> Add
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Additional Comments */}
-        <div className="bg-white rounded-lg p-4 mb-6 shadow-sm">
-          <h3 className="text-lg font-playfair font-medium text-hotel-burgundy mb-3">Additional Comments</h3>
-          <Textarea
-            placeholder="Any special requests or notes?"
-            value={additionalComments}
-            onChange={(e) => setAdditionalComments(e.target.value)}
-            className="min-h-[100px]"
-          />
-        </div>
-
-        {/* Payment Method and Order Summary */}
-        {selectedItems.length > 0 && (
-          <div className="fixed bottom-16 left-0 right-0 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-4">
-            <div className="mb-4">
-              <h4 className="text-sm font-medium mb-2">Payment Method</h4>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => setPaymentMethod("card")}
-                  className={`flex items-center justify-center gap-2 p-2 rounded-lg border ${
-                    paymentMethod === "card" 
-                      ? "bg-hotel-burgundy text-white border-hotel-burgundy" 
-                      : "border-gray-200"
-                  }`}
-                >
-                  <CreditCard size={18} />
-                  <span>Card</span>
-                </button>
-                <button
-                  onClick={() => setPaymentMethod("cash")}
-                  className={`flex items-center justify-center gap-2 p-2 rounded-lg border ${
-                    paymentMethod === "cash" 
-                      ? "bg-hotel-burgundy text-white border-hotel-burgundy" 
-                      : "border-gray-200"
-                  }`}
-                >
-                  <Wallet size={18} />
-                  <span>{orderType === "delivery" ? "Cash on Delivery" : "Cash"}</span>
-                </button>
-              </div>
+        <div className="space-y-6">
+          <div>
+            <h2 className="font-semibold mb-4 text-hotel-sand text-base mx-[12px]">Main Courses</h2>
+            <div className="space-y-3">
+              {mainItems.map((item, index) => <motion.div key={item.id} initial={{
+              opacity: 0,
+              y: 20
+            }} animate={{
+              opacity: 1,
+              y: 0
+            }} transition={{
+              delay: index * 0.1
+            }}>
+                  <MenuItemCard name={item.name} description={item.description} price={item.price} image={item.image} quantity={getItemQuantity(item.id)} onAdd={() => addToCart(item)} onRemove={() => removeFromCart(item.id)} />
+                </motion.div>)}
             </div>
-            
-            <div className="flex justify-between items-center mb-3">
-              <div className="font-medium">Order Total</div>
-              <div className="font-bold text-hotel-burgundy">${getOrderTotal().toFixed(2)}</div>
-            </div>
-            
-            <Button 
-              className="w-full bg-hotel-burgundy hover:bg-hotel-burgundy/90"
-              onClick={handlePlaceOrder}
-            >
-              Place Order
-            </Button>
           </div>
-        )}
+
+          <div>
+            <h2 className="font-semibold text-hotel-charcoal mb-4 mx-[12px] text-hotel-sand-dark text-base">Desserts</h2>
+            <div className="space-y-3">
+              {dessertItems.map((item, index) => <motion.div key={item.id} initial={{
+              opacity: 0,
+              y: 20
+            }} animate={{
+              opacity: 1,
+              y: 0
+            }} transition={{
+              delay: (mainItems.length + index) * 0.1
+            }}>
+                  <MenuItemCard name={item.name} description={item.description} price={item.price} image={item.image} quantity={getItemQuantity(item.id)} onAdd={() => addToCart(item)} onRemove={() => removeFromCart(item.id)} />
+                </motion.div>)}
+            </div>
+          </div>
+
+          {/* Dining Extras */}
+          <ExtrasSelector title="Dining Extras" items={getDiningExtras()} selectedExtras={selectedExtras} onExtrasChange={setSelectedExtras} />
+
+          {/* Dining Add-ons */}
+          <ExtrasSelector title="Dining Add-ons" items={getDiningAddons()} selectedExtras={selectedAddons} onExtrasChange={setSelectedAddons} />
+
+          {/* Additional Comment */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-hotel-burgundy text-base mx-[12px] px-0 my-0 py-0 font-semibold">Additional Comments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea value={additionalComment} onChange={e => setAdditionalComment(e.target.value)} placeholder="Any special requests or dietary requirements? (Optional)" className="w-full min-h-[80px]" />
+            </CardContent>
+          </Card>
+
+          {/* Cart Summary */}
+          {(cart.length > 0 || calculateExtrasTotal() > 0) && <Card className="bg-hotel-burgundy/5 border-hotel-burgundy/20">
+              <CardContent className="p-6">
+                <h3 className="font-semibold text-hotel-charcoal mb-3">Your Order</h3>
+                <div className="space-y-2 mb-4">
+                  {cart.map(item => <div key={item.id} className="flex justify-between items-center">
+                      <div className="flex-1">
+                        <span className="text-sm">{item.title}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-6 h-6 rounded-full bg-hotel-beige flex items-center justify-center text-sm">
+                          -
+                        </button>
+                        <span className="text-sm w-8 text-center">{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-6 h-6 rounded-full bg-hotel-burgundy text-white flex items-center justify-center text-sm">
+                          +
+                        </button>
+                        <span className="text-sm w-12 text-right">${item.price * item.quantity}</span>
+                      </div>
+                    </div>)}
+                  {calculateExtrasTotal() > 0 && <div className="flex justify-between text-sm pt-2 border-t border-hotel-burgundy/20">
+                      <span>Extras & Add-ons</span>
+                      <span>${calculateExtrasTotal()}</span>
+                    </div>}
+                </div>
+                <div className="flex justify-between font-bold text-lg pt-2 border-t border-hotel-burgundy/20">
+                  <span>Total</span>
+                  <span className="text-hotel-burgundy">${getCartTotal()}</span>
+                </div>
+              </CardContent>
+            </Card>}
+
+          <Button onClick={handleOrder} disabled={cart.length === 0} className="w-full bg-hotel-burgundy-dark font-semibold h-12 text-hotel-sand py-[10px] text-lg text-center bg-red-900 hover:bg-red-800">
+            {cart.length > 0 || calculateExtrasTotal() > 0 ? `Place Order - $${getCartTotal()}` : "Add Items to Cart"}
+          </Button>
+        </div>
       </div>
-    </MobileLayout>
-  );
+    </MobileLayout>;
 };
-
 export default RestaurantPage;

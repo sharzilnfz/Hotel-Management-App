@@ -66,7 +66,7 @@ const serviceItems = [
   },
   {
     id: "service5",
-    title: "Grand Hall",
+    title: "Meeting Hall",
     description: "Perfect venue for occasions",
     icon: <LayoutGrid size={26} strokeWidth={2} />,
     path: "/meeting-hall",
@@ -83,6 +83,40 @@ const serviceItems = [
 const Home = () => {
   const { user, isAuthenticated } = useAuth();
 
+  // Function to get tier-based colors
+  const getTierColors = (tier: string) => {
+    switch (tier) {
+      case "gold":
+        return {
+          background: "bg-gradient-to-br from-yellow-500 via-yellow-600 to-amber-700",
+          overlay: "bg-gradient-to-br from-yellow-400/20 to-amber-600/30",
+          badge: "bg-yellow-400/90 text-yellow-900",
+          accent: "bg-yellow-300/40"
+        };
+      case "platinum":
+        return {
+          background: "bg-gradient-to-br from-slate-400 via-slate-600 to-slate-800",
+          overlay: "bg-gradient-to-br from-slate-300/20 to-slate-700/30",
+          badge: "bg-slate-200/90 text-slate-900",
+          accent: "bg-slate-300/40"
+        };
+      case "silver":
+        return {
+          background: "bg-gradient-to-br from-gray-400 via-gray-500 to-gray-700",
+          overlay: "bg-gradient-to-br from-gray-300/20 to-gray-600/30",
+          badge: "bg-gray-200/90 text-gray-900",
+          accent: "bg-gray-300/40"
+        };
+      default: // standard
+        return {
+          background: "bg-gradient-to-br from-rose-500 via-rose-600 to-rose-800",
+          overlay: "bg-gradient-to-br from-rose-400/20 to-rose-700/30",
+          badge: "bg-rose-200/90 text-rose-900",
+          accent: "bg-rose-300/40"
+        };
+    }
+  };
+
   return (
     <MobileLayout showLogo>
       <div className="p-6 pb-32">
@@ -91,37 +125,28 @@ const Home = () => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="mb-8"
+            className="mb-6"
           >
-            <div className="hotel-card p-6 border-2 border-hotel-beige/40">
-              <div className="flex items-center">
-                <div className="mr-5">
-                  {user.profileImage ? (
-                    <img
-                      src={user.profileImage}
-                      alt={user.name}
-                      className="w-16 h-16 rounded-full object-cover ring-4 ring-hotel-gold/30"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-full bg-luxury-gradient text-white flex items-center justify-center text-2xl font-bold font-playfair ring-4 ring-hotel-gold/30">
-                      {user.name.charAt(0)}
-                    </div>
-                  )}
-                </div>
+            <div className={`relative overflow-hidden ${getTierColors(user.tier).background} rounded-3xl shadow-2xl h-32`}>
+              {/* Background pattern overlay */}
+              <div className={`absolute inset-0 ${getTierColors(user.tier).overlay}`}></div>
+              
+              {/* Decorative elements */}
+              <div className={`absolute top-2 right-2 w-16 h-16 ${getTierColors(user.tier).accent} rounded-full opacity-30`}></div>
+              <div className={`absolute bottom-2 left-2 w-8 h-8 ${getTierColors(user.tier).accent} rounded-full opacity-20`}></div>
+              
+              <div className="relative p-6 h-full flex items-center">
                 <div className="flex-1">
-                  <h2 className="text-xl font-playfair font-bold text-hotel-burgundy mb-1">
-                    Welcome back, {user.name.split(" ")[0]}
+                  <h2 className="text-lg font-playfair font-bold text-white mb-1">
+                    Welcome back, {user.name.split(" ")[0]}!
                   </h2>
-                  <div className="flex items-center text-sm text-hotel-charcoal/80 font-montserrat">
-                    <div className="flex items-center bg-gold-gradient px-3 py-1 rounded-full">
-                      <Award size={16} className="text-hotel-burgundy mr-2" />
-                      <span className="font-semibold text-hotel-burgundy">{user.loyaltyPoints} points</span>
-                    </div>
-                    <span className="mx-3 text-hotel-gold">•</span>
-                    <div className="flex items-center">
-                      <Sparkles size={16} className="text-hotel-gold mr-1" />
-                      <span className="font-semibold capitalize text-hotel-burgundy">{user.tier} Tier</span>
-                    </div>
+                  <p className="text-white/90 font-montserrat text-sm">
+                    {user.loyaltyPoints} points • {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)} Member
+                  </p>
+                </div>
+                <div className="ml-4">
+                  <div className={`${getTierColors(user.tier).badge} px-4 py-2 rounded-xl font-bold text-sm font-montserrat uppercase tracking-wider shadow-lg`}>
+                    {user.tier}
                   </div>
                 </div>
               </div>

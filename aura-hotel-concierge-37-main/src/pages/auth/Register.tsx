@@ -1,17 +1,23 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Mail, Lock, AlertCircle } from "lucide-react";
+import { ArrowLeft, User, Mail, Lock, AlertCircle, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { CountrySelector } from "@/components/ui/country-selector";
 
 const Register = () => {
   const navigate = useNavigate();
-  const { register, socialLogin, isLoading } = useAuth();
+  const {
+    register,
+    socialLogin,
+    isLoading
+  } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [countryCode, setCountryCode] = useState("+1");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState("");
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -25,6 +31,11 @@ const Register = () => {
     
     if (password.length < 6) {
       setError("Password must be at least 6 characters long.");
+      return;
+    }
+
+    if (!phoneNumber.trim()) {
+      setError("Mobile number is required.");
       return;
     }
     
@@ -48,28 +59,29 @@ const Register = () => {
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="flex items-center mb-10">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 -ml-2 text-gray-600"
-        >
+        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-600">
           <ArrowLeft size={24} />
         </button>
-        <h1 className="text-2xl font-playfair text-center flex-1 mr-8">Create Account</h1>
+        <h1 className="font-playfair text-center flex-1 mr-8 text-hotel-burgundy-dark">Create Account</h1>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+      <motion.div 
+        initial={{
+          opacity: 0,
+          y: 20
+        }} 
+        animate={{
+          opacity: 1,
+          y: 0
+        }} 
+        transition={{
+          duration: 0.5
+        }} 
         className="max-w-md mx-auto"
       >
         <div className="flex flex-col justify-center">
           <div className="text-center mb-8">
-            <img
-              src="/lovable-uploads/50d770e8-285d-4eea-b8bc-8fa0af1d3b87.png"
-              alt="Parkside Plaza Hotel"
-              className="h-16 mx-auto mb-4"
-            />
+            <img src="/lovable-uploads/50d770e8-285d-4eea-b8bc-8fa0af1d3b87.png" alt="Parkside Plaza Hotel" className="h-16 mx-auto mb-4" />
             <p className="text-gray-600">
               Join us to enjoy exclusive benefits and rewards
             </p>
@@ -91,13 +103,13 @@ const Register = () => {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <User size={18} className="text-gray-400" />
                 </div>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  className="pl-10 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-hotel-burgundy focus:border-transparent"
-                  placeholder="John Doe"
+                <input 
+                  type="text" 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  required 
+                  className="pl-10 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-hotel-burgundy focus:border-transparent" 
+                  placeholder="John Doe" 
                 />
               </div>
             </div>
@@ -110,14 +122,39 @@ const Register = () => {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail size={18} className="text-gray-400" />
                 </div>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="pl-10 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-hotel-burgundy focus:border-transparent"
-                  placeholder="your.email@example.com"
+                <input 
+                  type="email" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  required 
+                  className="pl-10 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-hotel-burgundy focus:border-transparent" 
+                  placeholder="your.email@example.com" 
                 />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mobile Number
+              </label>
+              <div className="flex gap-2">
+                <CountrySelector 
+                  value={countryCode} 
+                  onValueChange={setCountryCode} 
+                />
+                <div className="relative flex-1">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Phone size={18} className="text-gray-400" />
+                  </div>
+                  <input 
+                    type="tel" 
+                    value={phoneNumber} 
+                    onChange={(e) => setPhoneNumber(e.target.value)} 
+                    required 
+                    className="pl-10 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-hotel-burgundy focus:border-transparent" 
+                    placeholder="123 456 7890" 
+                  />
+                </div>
               </div>
             </div>
 
@@ -129,13 +166,13 @@ const Register = () => {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock size={18} className="text-gray-400" />
                 </div>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="pl-10 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-hotel-burgundy focus:border-transparent"
-                  placeholder="••••••••"
+                <input 
+                  type="password" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  required 
+                  className="pl-10 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-hotel-burgundy focus:border-transparent" 
+                  placeholder="••••••••" 
                 />
               </div>
             </div>
@@ -148,24 +185,19 @@ const Register = () => {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock size={18} className="text-gray-400" />
                 </div>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="pl-10 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-hotel-burgundy focus:border-transparent"
-                  placeholder="••••••••"
+                <input 
+                  type="password" 
+                  value={confirmPassword} 
+                  onChange={(e) => setConfirmPassword(e.target.value)} 
+                  required 
+                  className="pl-10 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-hotel-burgundy focus:border-transparent" 
+                  placeholder="••••••••" 
                 />
               </div>
             </div>
 
             <div className="flex items-start">
-              <input
-                type="checkbox"
-                id="termsCheckbox"
-                required
-                className="mt-1 border-gray-300 rounded text-hotel-burgundy focus:ring-hotel-burgundy"
-              />
+              <input type="checkbox" id="termsCheckbox" required className="mt-1 border-gray-300 rounded text-hotel-burgundy focus:ring-hotel-burgundy" />
               <label htmlFor="termsCheckbox" className="ml-2 text-sm text-gray-600">
                 I agree to the{" "}
                 <a href="#" className="text-hotel-burgundy">
@@ -178,9 +210,9 @@ const Register = () => {
               </label>
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
+            <button 
+              type="submit" 
+              disabled={isLoading} 
               className="w-full bg-hotel-burgundy text-white py-3 rounded-lg font-medium flex items-center justify-center"
             >
               {isLoading ? "Creating Account..." : "Create Account"}
@@ -200,26 +232,12 @@ const Register = () => {
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-4">
-              <button
-                onClick={() => handleSocialLogin("google")}
-                className="py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
-              >
-                <img
-                  src="https://www.svgrepo.com/show/355037/google.svg"
-                  alt="Google"
-                  className="w-5 h-5"
-                />
+              <button onClick={() => handleSocialLogin("google")} className="py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50">
+                <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" className="w-5 h-5" />
                 <span>Google</span>
               </button>
-              <button
-                onClick={() => handleSocialLogin("apple")}
-                className="py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
-              >
-                <img
-                  src="https://www.svgrepo.com/show/494552/apple.svg"
-                  alt="Apple"
-                  className="w-5 h-5"
-                />
+              <button onClick={() => handleSocialLogin("apple")} className="py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50">
+                <img src="https://www.svgrepo.com/show/494552/apple.svg" alt="Apple" className="w-5 h-5" />
                 <span>Apple</span>
               </button>
             </div>

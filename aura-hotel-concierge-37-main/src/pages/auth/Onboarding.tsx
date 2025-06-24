@@ -5,6 +5,7 @@ import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination } from "swiper/modules";
+import { Button } from "@/components/ui/button";
 import "swiper/css";
 import "swiper/css/pagination";
 
@@ -80,19 +81,19 @@ const Onboarding = () => {
         {isLastSlide ? (
           <div className="space-y-3">
             <Link to="/auth/login">
-              <button className="w-full bg-hotel-burgundy text-white py-3 rounded-lg font-medium">
+              <Button className="w-full py-3">
                 Sign In
-              </button>
+              </Button>
             </Link>
             <Link to="/auth/register">
-              <button className="w-full bg-white text-hotel-burgundy border border-hotel-burgundy py-3 rounded-lg font-medium">
+              <Button variant="outline" className="w-full py-3">
                 Create Account
-              </button>
+              </Button>
             </Link>
             <Link to="/">
-              <button className="w-full text-gray-500 py-3 font-medium">
+              <Button variant="ghost" className="w-full py-3">
                 Continue as Guest
-              </button>
+              </Button>
             </Link>
           </div>
         ) : (
@@ -100,12 +101,13 @@ const Onboarding = () => {
             <Link to="/" className="text-gray-500">
               Skip
             </Link>
-            <button
+            <Button
               onClick={() => setActiveSlide(activeSlide + 1)}
-              className="w-12 h-12 rounded-full bg-hotel-burgundy text-white flex items-center justify-center shadow-lg"
+              size="icon"
+              className="rounded-full shadow-lg"
             >
               <ChevronRight size={24} />
-            </button>
+            </Button>
           </div>
         )}
       </div>
