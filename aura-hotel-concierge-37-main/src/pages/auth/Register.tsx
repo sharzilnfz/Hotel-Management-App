@@ -1,23 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-
->>>>>>> parent of 46312a2 (Mobile app new updates)
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Mail, Lock, AlertCircle } from "lucide-react";
-import { motion } from "framer-motion";
-import { useAuth } from "@/contexts/AuthContext";
-
-const Register = () => {
-  const navigate = useNavigate();
-  const { register, socialLogin, isLoading } = useAuth();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-=======
 //Register.tsx
 import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
@@ -82,7 +62,6 @@ const Register = () => {
 
     return true;
   };
->>>>>>> 7df19ce79ee5430d0214373f34eb50bfe0c2001e
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,16 +69,7 @@ const Register = () => {
     if (!validateForm()) {
       return;
     }
-<<<<<<< HEAD
-    
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters long.");
-      return;
-    }
-    
-=======
 
->>>>>>> 7df19ce79ee5430d0214373f34eb50bfe0c2001e
     try {
       await register(name, email, password, phone);
       toast.success('Account created successfully!');
@@ -138,17 +108,9 @@ const Register = () => {
         >
           <ArrowLeft size={24} />
         </button>
-<<<<<<< HEAD
-<<<<<<< HEAD
-        <h1 className="font-playfair text-center flex-1 mr-8 text-hotel-burgundy-dark">Create Account</h1>
-=======
         <h1 className="text-2xl font-playfair text-center flex-1 mr-8">
           Create Account
         </h1>
->>>>>>> 7df19ce79ee5430d0214373f34eb50bfe0c2001e
-=======
-        <h1 className="text-2xl font-playfair text-center flex-1 mr-8">Create Account</h1>
->>>>>>> parent of 46312a2 (Mobile app new updates)
       </div>
 
       <motion.div
@@ -217,29 +179,6 @@ const Register = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-<<<<<<< HEAD
-<<<<<<< HEAD
-                Mobile Number
-              </label>
-              <div className="flex gap-2">
-                <CountrySelector 
-                  value={countryCode} 
-                  onValueChange={setCountryCode} 
-                />
-                <div className="relative flex-1">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Phone size={18} className="text-gray-400" />
-                  </div>
-                  <input 
-                    type="tel" 
-                    value={phoneNumber} 
-                    onChange={(e) => setPhoneNumber(e.target.value)} 
-                    required 
-                    className="pl-10 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-hotel-burgundy focus:border-transparent" 
-                    placeholder="123 456 7890" 
-                  />
-                </div>
-=======
                 Phone Number <span className="text-gray-400">(Optional)</span>
               </label>
               <div className="relative">
@@ -253,14 +192,11 @@ const Register = () => {
                   className="pl-10 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-hotel-burgundy focus:border-transparent"
                   placeholder="+1 (555) 123-4567"
                 />
->>>>>>> 7df19ce79ee5430d0214373f34eb50bfe0c2001e
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-=======
->>>>>>> parent of 46312a2 (Mobile app new updates)
                 Password
               </label>
               <div className="relative">
@@ -307,18 +243,6 @@ const Register = () => {
               )}
             </div>
 
-<<<<<<< HEAD
-            <div className="flex items-start">
-              <input
-                type="checkbox"
-                id="termsCheckbox"
-                required
-                className="mt-1 border-gray-300 rounded text-hotel-burgundy focus:ring-hotel-burgundy"
-              />
-              <label htmlFor="termsCheckbox" className="ml-2 text-sm text-gray-600">
-                I agree to the{" "}
-                <a href="#" className="text-hotel-burgundy">
-=======
             <div className="flex items-start space-x-3">
               <input
                 type="checkbox"
@@ -332,7 +256,6 @@ const Register = () => {
               >
                 I agree to the{' '}
                 <a href="#" className="text-hotel-burgundy hover:underline">
->>>>>>> 7df19ce79ee5430d0214373f34eb50bfe0c2001e
                   Terms of Service
                 </a>{' '}
                 and{' '}
@@ -364,15 +287,6 @@ const Register = () => {
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-4">
-<<<<<<< HEAD
-<<<<<<< HEAD
-              <button onClick={() => handleSocialLogin("google")} className="py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50">
-                <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" className="w-5 h-5" />
-                <span>Google</span>
-              </button>
-              <button onClick={() => handleSocialLogin("apple")} className="py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50">
-                <img src="https://www.svgrepo.com/show/494552/apple.svg" alt="Apple" className="w-5 h-5" />
-=======
               <button
                 onClick={() => handleSocialLogin('google')}
                 className="py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
@@ -386,21 +300,6 @@ const Register = () => {
               </button>
               <button
                 onClick={() => handleSocialLogin('apple')}
-=======
-              <button
-                onClick={() => handleSocialLogin("google")}
-                className="py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
-              >
-                <img
-                  src="https://www.svgrepo.com/show/355037/google.svg"
-                  alt="Google"
-                  className="w-5 h-5"
-                />
-                <span>Google</span>
-              </button>
-              <button
-                onClick={() => handleSocialLogin("apple")}
->>>>>>> parent of 46312a2 (Mobile app new updates)
                 className="py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50"
               >
                 <img
@@ -408,10 +307,6 @@ const Register = () => {
                   alt="Apple"
                   className="w-5 h-5"
                 />
-<<<<<<< HEAD
->>>>>>> 7df19ce79ee5430d0214373f34eb50bfe0c2001e
-=======
->>>>>>> parent of 46312a2 (Mobile app new updates)
                 <span>Apple</span>
               </button>
             </div>

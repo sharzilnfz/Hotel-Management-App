@@ -36,18 +36,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-<<<<<<< HEAD
-// Mock user data
-const mockUser: User = {
-  id: "user-1",
-  name: "John Doe",
-  email: "john.doe@example.com",
-  phone: "+1 (555) 123-4567",
-  loyaltyPoints: 750,
-  tier: "gold",
-  profileImage: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=250&h=250&fit=crop&crop=faces&q=80",
-  language: "en",
-=======
 // Helper function to map backend user to frontend user format
 const mapBackendUserToUser = (backendUser: {
   _id: string;
@@ -80,7 +68,6 @@ const mapBackendUserToUser = (backendUser: {
     status: backendUser.status,
     isStaff: backendUser.isStaff,
   };
->>>>>>> 7df19ce79ee5430d0214373f34eb50bfe0c2001e
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -91,17 +78,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     // Check if user is already logged in from local storage
-<<<<<<< HEAD
-    const storedUser = localStorage.getItem("parkside_user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    
-    // Simulate loading delay
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-=======
     const initializeAuth = async () => {
       try {
         const storedUser = authService.getStoredUser();
@@ -128,7 +104,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     initializeAuth();
->>>>>>> 7df19ce79ee5430d0214373f34eb50bfe0c2001e
   }, []);
 
   const login = async (email: string, password: string) => {

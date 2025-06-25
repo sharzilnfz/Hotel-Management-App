@@ -20,6 +20,7 @@ import menuCategoryRoutes from './routes/restaurant/menuCategory.routes.js';
 import menuItemRoutes from './routes/restaurant/menuItem.routes.js';
 import restaurantSettingsRoutes from './routes/restaurant/restaurantSettings.routes.js';
 import tableRoutes from './routes/restaurant/table.routes.js';
+import roomBookingRoutes from './routes/rooms/room-booking.routes.js';
 import roomRoutes from './routes/rooms/room.routes.js';
 import appearanceSettingsRoutes from './routes/settings/appearanceSettings.routes.js';
 import currenciesRoutes from './routes/settings/currenciesSettings.routes.js';
@@ -142,6 +143,7 @@ app.get('/test-uploads', (req, res) => {
 
 // Routes
 app.use('/api/rooms', roomRoutes);
+app.use('/api/room-bookings', roomBookingRoutes);
 app.use('/api/specialists', specialistRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/spa/services', serviceRoutes);
